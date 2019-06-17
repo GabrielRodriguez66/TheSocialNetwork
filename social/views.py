@@ -1,11 +1,12 @@
 from django.http import HttpResponseRedirect
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
 from django.views.generic import ListView
 
 from social.admin import SocialNetworkBackend
-from .forms import SearchForm
-from .models import SocialNetworkUser
+from .forms import SearchForm, ShoutForm
+from .models import SocialNetworkUser, Shout
 
 
 class MyFriendsView(ListView):
@@ -68,3 +69,16 @@ def search(request):
     }
 
     return render(request, 'social/search.html', context)
+
+
+def timeline(request):
+    if request.method == 'POST':
+        form = ShoutForm(request.POST or None)
+        if form.is_valid():
+            Shout.objects.create(shout_text=request.POST["shout_text"], author=SocialNetworkUser.objects.first(),
+                                 pub_date=timezone.now())
+            return HttpResponseRedirect(reverse("social:timeline"))
+    else:
+        form = ShoutForm()
+    shouts = Shout.objects.order_by('-pub_date')
+    return render(request, 'social/timeline.html', {'shouts': shouts, 'forms': form,})

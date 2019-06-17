@@ -1,0 +1,17 @@
+<form action="" method="post">
+    {% csrf_token %}
+    {{ forms }}
+    <input type="submit" value="Submit">
+</form>
+
+
+
+{%  if shouts %}
+    <ul>
+        {%  for shout in shouts %}
+            <li>{{ shout.shout_text }}   <strong> posted </strong> {{ shout.pub_date }} </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No posts available.<a href="/friends/{{ 1 }}/"> Add friends</a> to see their posts here.</p>
+{% endif %}
