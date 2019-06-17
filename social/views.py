@@ -4,6 +4,7 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.views.generic import ListView
 
+from social.admin import SocialNetworkBackend
 from .models import SocialNetworkUser
 
 
@@ -17,11 +18,10 @@ class MyFriendsView(ListView):
         """
         return SocialNetworkUser.objects.first().friends.all()
 
-# Create your views here.
-from social.admin import SocialNetworkBackend
 
 def register_form(request):
     return render(request, 'social/register.html')
+
 
 def login(request, username, password):
     backend = SocialNetworkBackend()
@@ -30,6 +30,7 @@ def login(request, username, password):
         pass  # Authenticated
     else:
         pass  # Not authenticated
+
 
 def register(request):
     username = request.POST["username"]
