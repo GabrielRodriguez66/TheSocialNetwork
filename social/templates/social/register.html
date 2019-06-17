@@ -1,0 +1,14 @@
+<h1>Register</h1>
+
+    {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
+
+    <form action="{% url "social:register" %}" method="post">
+        {% csrf_token %}
+        <label for="username">Username: </label>
+        <input id = "username" type="text" name="username" maxlength="20">
+
+         <label for="password">Password: </label>
+        <input id = "password" type="text" name="password"  minlength="8" maxlength="30">
+
+        <input type="submit" value="Register">
+    </form>
