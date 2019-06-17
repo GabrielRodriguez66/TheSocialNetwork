@@ -8,6 +8,15 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
 
+#  Authentication Back-ends
+class TooManyEntries(Exception):
+    pass
+
+
+class InvalidServiceAccount(Exception):
+    pass
+
+
 def login_user(user, request):
     request.user = user
 

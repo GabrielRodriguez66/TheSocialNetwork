@@ -69,12 +69,19 @@ TEMPLATES = [
     },
 ]
 
-
 # En settings
 AUTHENTICATION_BACKENDS = (
     'social.admin.SocialNetworkBackend',
 )
 
+NOTARIAT_ACTIVE_DIRECTORY = 'dcsj01.tribunales.local'
+
+NOTARIAT_AD = {
+    'ad_url': 'ldap://' + NOTARIAT_ACTIVE_DIRECTORY,
+    'service_account_dn': 'CN=renservice,OU=Cuentas de Servicios,OU=Tribunales,DC=tribunales,DC=local',
+    'service_account_password': 'Apl1rens3c',
+    'search_root': 'OU=tribunales,dc=tribunales,dc=local',
+}
 
 WSGI_APPLICATION = 'TheSocialNetwork.wsgi.application'
 
@@ -88,7 +95,6 @@ DATABASES = {
         'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.2/ref/settings/#auth-password-validators

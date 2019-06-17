@@ -4,10 +4,10 @@ from django.shortcuts import render
 from social.admin import SocialNetworkBackend
 
 
-def login(request):
+def login(request, username, password):
     backend = SocialNetworkBackend()
     user = backend.authenticate(username, password)
     if user:
-        # Authenticated
+        pass  # Authenticated
     else:
-        # Not authenticated
+        pass  # Not authenticated
