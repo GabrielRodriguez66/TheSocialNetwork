@@ -69,6 +69,13 @@ TEMPLATES = [
     },
 ]
 
+
+# En settings
+AUTHENTICATION_BACKENDS = (
+    'social.admin.SocialNetworkBackend',
+)
+
+
 WSGI_APPLICATION = 'TheSocialNetwork.wsgi.application'
 
 
