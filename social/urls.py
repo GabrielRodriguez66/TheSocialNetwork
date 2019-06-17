@@ -3,4 +3,6 @@ from django.urls import path
 from . import views
 
 app_name = 'social'
-urlpatterns = []
+urlpatterns = [
+    path("friends/", views.MyFriendsView.as_view(), name="my_friends")
+]
