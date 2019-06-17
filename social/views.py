@@ -1,9 +1,10 @@
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render
-from django.urls import reverse
+from django.shortcuts import render, reverse
 from django.views.generic import ListView
 
+from social.admin import SocialNetworkBackend
+from .forms import SearchForm
 from .models import SocialNetworkUser
 
 
@@ -17,11 +18,10 @@ class MyFriendsView(ListView):
         """
         return SocialNetworkUser.objects.first().friends.all()
 
-# Create your views here.
-from social.admin import SocialNetworkBackend
 
 def register_form(request):
     return render(request, 'social/register.html')
+
 
 def login(request, username, password):
     backend = SocialNetworkBackend()
@@ -30,6 +30,7 @@ def login(request, username, password):
         pass  # Authenticated
     else:
         pass  # Not authenticated
+
 
 def register(request):
     username = request.POST["username"]
@@ -50,3 +51,20 @@ def register(request):
 def unfriend(request, friend_pk):
     get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:my_friends'))
+
+
+def search(request):
+    users = SocialNetworkUser.objects.all()
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            if request.POST["username"] != '':
+                users = SocialNetworkUser.objects.filter(username=request.POST["username"])
+    else:
+        form = SearchForm()
+    context = {
+        'users': users,
+        'form': form
+    }
+
+    return render(request, 'social/search.html', context)

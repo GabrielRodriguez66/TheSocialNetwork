@@ -6,5 +6,6 @@ app_name = 'social'
 urlpatterns = [
     path("friends/", views.MyFriendsView.as_view(), name="my_friends"),
     path("register/", views.register, name="register"),
+    path('search/', views.search, name="search"),
     path("unfriend/<int:friend_pk>", views.unfriend, name="unfriend"),
 ]
