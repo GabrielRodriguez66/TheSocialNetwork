@@ -75,7 +75,8 @@ def timeline(request):
     if request.method == 'POST':
         form = ShoutForm(request.POST or None)
         if form.is_valid():
-            Shout.objects.create(shout_text=request.POST["shout_text"], author=User.objects.first(), pub_date=timezone.now())
+            Shout.objects.create(shout_text=request.POST["shout_text"], author=SocialNetworkUser.objects.first(),
+                                 pub_date=timezone.now())
             return HttpResponseRedirect(reverse("social:timeline"))
     else:
         form = ShoutForm()
