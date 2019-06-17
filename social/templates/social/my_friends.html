@@ -5,10 +5,16 @@
     {% if my_friends_list %}
         <ul>
             {% for friend in my_friends_list %}
-                <li>{{ friend.username }}</li>
+                <li>
+                    {{ friend.username }}
+                    <a href="{% url "social:unfriend" friend.id %}" class="btn  btn-danger btn-sm" > Unfriend </a>
+                    <br>
+                    <br>
+
+                </li>
             {% endfor %}
         </ul>
     {% else %}
-        <p> You don't have friends. </p>
+        <p> You don't have friends. :( </p>
     {% endif %}
 {% endblock %}
