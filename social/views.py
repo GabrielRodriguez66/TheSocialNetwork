@@ -9,6 +9,7 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
@@ -36,7 +37,6 @@ def asocia_usuario(request):
     return response
 
 
-@login_required
 class MyFriendsView(ListView):
     template_name = 'social/my_friends.html'
     context_object_name = 'my_friends_list'
@@ -46,6 +46,10 @@ class MyFriendsView(ListView):
             Excludes any questions that aren't published yet.
         """
         return SocialNetworkUser.objects.first().friends.all()
+
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyFriendsView, self).dispatch(request, *args, **kwargs)
 
 
 def logout_view(request):
