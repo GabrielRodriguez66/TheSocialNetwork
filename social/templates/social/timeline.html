@@ -30,7 +30,8 @@
             {%  for shout in shouts %}
                 <li> <div class="card" style="width: 30rem;">
                     <div class="card-body">
-                        {{ shout.shout_text }}   <strong> posted </strong> {{ shout.pub_date }}
+                        <h5 class="card-title">{{ shout.author.usuario.first_name }}</h5>
+                        <p>{{ shout.text }}   <strong> posted </strong> {{ shout.pub_date }}</p>
                     </div>
                 </div>
                 </li> <br>
