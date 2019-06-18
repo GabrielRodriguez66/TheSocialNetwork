@@ -110,8 +110,8 @@ def unfriend(request, friend_pk):
 
 @login_required
 def search(request):
-    users = SocialNetworkUser.objects.all()
-    auth = SocialNetworkUser.objects.first()
+    users = SocialNetworkUser.objects.exclude(usuario=request.user)
+    auth = request.user.socialnetworkuser
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
