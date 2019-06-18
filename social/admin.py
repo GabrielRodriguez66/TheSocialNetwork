@@ -1,12 +1,13 @@
 import ldap
 from django.conf import settings
-
 # Register your models here.
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 
-
 #  Authentication Back-ends
+from social.models import SocialNetworkUser
+
+
 class TooManyEntries(Exception):
     pass
 
@@ -107,6 +108,13 @@ class ActiveDirectoryBackend(ModelBackend):
                 'email': email,
                 }
 
+    def create_user(self, username):
+        usuario_nuevo = User(username=username, password='', is_active=True, is_staff=True, is_superuser=False)
+        usuario_nuevo.save()
+        user_profile = SocialNetworkUser(usuario=usuario_nuevo)
+        user_profile.save()
+        return usuario_nuevo
+
 
 class SocialNetworkBackend(ActiveDirectoryBackend):
     def get_user_by_username(self, username):
@@ -116,4 +124,15 @@ class SocialNetworkBackend(ActiveDirectoryBackend):
             user = User.objects.get(email__iexact=username)
         except User.DoesNotExist:
             user = None
+        return user
+
+
+class AutenticaSiNoExisteBackend(ActiveDirectoryBackend):
+    def get_user_by_username(self, username):
+        username = username.split('@')[0]
+        username += '@ramajudicial.pr'
+        try:
+            user = User.objects.get(email__iexact=username)
+        except User.DoesNotExist:
+            user = User.objects.first()
         return user

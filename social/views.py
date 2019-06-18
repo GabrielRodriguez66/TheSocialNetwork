@@ -1,10 +1,35 @@
-from django.http import HttpResponseRedirect
+import json
+
+from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
+from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
+from social.admin import SocialNetworkBackend, AutenticaSiNoExisteBackend
+from social.forms import RegisterForm
 from .models import SocialNetworkUser
+
+
+@never_cache
+@require_http_methods(["POST"])
+def asocia_usuario(request):
+    content_type = "application/json"
+    response = HttpResponse(content_type=content_type)
+    try:
+        User = get_user_model()
+        usuario_existente = User.objects.get(username__iexact=request.POST.get('username', ""))
+        response.write(json.dumps({"resultado": "Este usuario ya existe en el sistema.",
+                                   "nombre_completo": usuario_existente.get_full_name(),
+                                   "nombre_usuario": usuario_existente.username,
+                                   "email": usuario_existente.email, }))
+    except ObjectDoesNotExist:
+        response.write(json.dumps(SocialNetworkBackend().get_user_info(request.POST.get('username', ""))))
+    return response
 
 
 class MyFriendsView(ListView):
@@ -17,11 +42,6 @@ class MyFriendsView(ListView):
         """
         return SocialNetworkUser.objects.first().friends.all()
 
-# Create your views here.
-from social.admin import SocialNetworkBackend
-
-def register_form(request):
-    return render(request, 'social/register.html')
 
 def login(request, username, password):
     backend = SocialNetworkBackend()
@@ -31,20 +51,26 @@ def login(request, username, password):
     else:
         pass  # Not authenticated
 
-def register(request):
-    username = request.POST["username"]
-    password = request.POST["password"]
 
-    if SocialNetworkUser.objects.filter(username=username).count() != 0:
-        return render(request, "social/register.html",
-        {"error_message": "Username already taken."})
-    if username == "":
-        return render(request, "social/register.html",
-                      {"error_message": "Username cannot be empty."})
-    if len(password) < 8 or len(password) > 30:
-        return render(request, "social/register.html",
-                      {"error_message": "Password must be 8-30 characters long."})
-    SocialNetworkUser.objects.create(username=username, password=password)
+def register(request):
+    if request.method == 'POST':
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            auth_only_backend = AutenticaSiNoExisteBackend()
+            authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
+                                                           form.cleaned_data['password'])
+            if authenticated:
+                user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
+                auth_only_backend.create_user(username=user_info['nombre_usuario'])
+                return HttpResponseRedirect(reverse("social:timeline"))
+            else:
+                return render(request, "social/register.html", context={'form': form})
+        else:
+            return render(request, "social/register.html", context={'form': form})
+    elif request.method == 'GET':
+        return render(request, "social/register.html", context={'form': RegisterForm()})
+    else:
+        return Http404()
 
 
 def unfriend(request, friend_pk):
