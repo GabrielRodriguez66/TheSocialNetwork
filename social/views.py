@@ -66,18 +66,13 @@ def register(request):
         if form.is_valid():
             auth_only_backend = SocialNetworkBackend()
             authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
-                                                           form.cleaned_data['password'], must_exist=False)
+                                                           form.cleaned_data['password'])
             if authenticated:
-                if not SocialNetworkUser.objects.filter(usuario__username=authenticated.username).exists():
-                    user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
-                    auth_only_backend.create_user(authenticated, user_info)
-                    return HttpResponseRedirect(reverse("social:timeline"))
-                else:
-                    return render(request, "social/register.html", context={'form': form,
-                                                                            'error_message': 'User already exists'})
+                user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
+                auth_only_backend.create_user(username=user_info['nombre_usuario'])
+                return HttpResponseRedirect(reverse("social:timeline"))
             else:
-                return render(request, "social/register.html", context={'form': form,
-                                                                'error_message': 'Username or Password is incorrect.'})
+                return render(request, "social/register.html", context={'form': form})
         else:
             return render(request, "social/register.html", context={'form': form})
     elif request.method == 'GET':
@@ -97,7 +92,7 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(username=request.POST["username"])
+                users = SocialNetworkUser.objects.filter(usuario_id=request.POST["username"])
     else:
         form = SearchForm()
     context = {
