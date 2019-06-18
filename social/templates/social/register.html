@@ -1,9 +1,14 @@
-<h1>Register</h1>
+<h1>Welcome to Rama Judicial Social Network</h1>
+{% block title %}
+<h2>Please register or log-in</h2>
+{%  endblock %}
 
     {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
-
+{%  block content %}
     <form action="{% url "social:register" %}" method="POST">
         {% csrf_token %}
         {{ form }}
         <input type="submit" value="Register">
     </form>
+<a href="{% url 'social:login' %}">Already a user? Click here to log-in!</a>
+{%  endblock %}

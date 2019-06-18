@@ -1,0 +1,12 @@
+{% extends "social/register.html" %}
+{% block title %}
+    <h2>Please log-in</h2>
+{% endblock %}
+{% block content %}
+    <form action="{% url "social:login" %}" method="POST">
+    {% csrf_token %}
+    {{ form }}
+        <input type="submit" value="Log-In">
+    </form>
+    <a href="{% url 'social:register' %}">Not a user? Click here to register!</a>
+{% endblock %}

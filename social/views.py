@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm
+from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
 from .models import SocialNetworkUser, Shout
 
@@ -44,13 +44,20 @@ class MyFriendsView(ListView):
         return SocialNetworkUser.objects.first().friends.all()
 
 
-def login(request, username, password):
-    backend = SocialNetworkBackend()
-    user = backend.authenticate(username, password)
-    if user:
-        pass  # Authenticated
-    else:
-        pass  # Not authenticated
+def login(request):
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            backend = SocialNetworkBackend()
+            user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'], must_exist=True)
+            if user:
+                return HttpResponseRedirect(reverse("social:timeline"))
+                # Authenticated
+            else:
+                return render(request, "social/login.html", context={'form': LoginForm(),
+                                                                     'error_message': "Username or password is incorrect"})  # Not authenticated
+    elif request.method == "GET":
+        return render(request, "social/login.html", context={'form': LoginForm()})
 
 
 def register(request):
