@@ -27,11 +27,14 @@ class ActiveDirectoryBackend(ModelBackend):
         self.service_account_password = settings.NOTARIAT_AD['service_account_password']
         self.search_root = settings.NOTARIAT_AD['search_root']
 
-    def authenticate(self, request, username=None, password=None, **kwargs):
-        user = self.get_user_by_username(username)
-        # Funcionarios y jueces tienen que estar registrados para tener acceso
-        if not user:
-            return None
+    def authenticate(self, request, username=None, password=None, must_exist=True, **kwargs):
+        if must_exist:
+            user = self.get_user_by_username(username)
+            # Funcionarios y jueces tienen que estar registrados para tener acceso
+            if not user:
+                return None
+        else:
+            user = None
 
         # Proceder a validar contraseña
         try:
@@ -46,7 +49,8 @@ class ActiveDirectoryBackend(ModelBackend):
             con.unbind_s()
             try:
                 con = self.bind(dn=dn, pwd=password)
-                # user = self.get_user_by_username(username, con, request, True)
+                if not user:
+                    user = User(username=username, password='', is_active=True, is_staff=True, is_superuser=False)
                 login_user(user, request)
                 return user
             except ldap.INVALID_CREDENTIALS:
@@ -108,8 +112,10 @@ class ActiveDirectoryBackend(ModelBackend):
                 'email': email,
                 }
 
-    def create_user(self, username):
-        usuario_nuevo = User(username=username, password='', is_active=True, is_staff=True, is_superuser=False)
+    def create_user(self, usuario_nuevo, user_info):
+        usuario_nuevo.first_name = user_info['primer_nombre']
+        usuario_nuevo.last_name = user_info['primer_apellido']
+        usuario_nuevo.email = user_info['email']
         usuario_nuevo.save()
         user_profile = SocialNetworkUser(usuario=usuario_nuevo)
         user_profile.save()
@@ -124,15 +130,4 @@ class SocialNetworkBackend(ActiveDirectoryBackend):
             user = User.objects.get(email__iexact=username)
         except User.DoesNotExist:
             user = None
-        return user
-
-
-class AutenticaSiNoExisteBackend(ActiveDirectoryBackend):
-    def get_user_by_username(self, username):
-        username = username.split('@')[0]
-        username += '@ramajudicial.pr'
-        try:
-            user = User.objects.get(email__iexact=username)
-        except User.DoesNotExist:
-            user = User.objects.first()
         return user
