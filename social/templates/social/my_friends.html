@@ -6,7 +6,7 @@
         <ul>
             {% for friend in my_friends_list %}
                 <li>
-                    {{ friend.username }}
+                    {{ friend.usuario.username }}
                     <a href="{% url "social:unfriend" friend.id %}" class="btn  btn-danger btn-sm" > Unfriend </a>
                     <br>
                     <br>
