@@ -1,17 +1,26 @@
-<form action="" method="post">
-    {% csrf_token %}
-    {{ forms }}
-    <input type="submit" value="Submit">
-</form>
+{% extends 'social/base.html' %}
+{% block content %}
+    <h1>Timeline</h1>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ forms }}
+        <input class="btn btn-info btn-sm" id="submitButton" type="submit" value="Submit">
+    </form>
 
 
 
-{%  if shouts %}
-    <ul>
-        {%  for shout in shouts %}
-            <li>{{ shout.shout_text }}   <strong> posted </strong> {{ shout.pub_date }} </li>
-        {% endfor %}
-    </ul>
-{% else %}
-    <p>No posts available.<a href="/friends/{{ 1 }}/"> Add friends</a> to see their posts here.</p>
-{% endif %}
+    {%  if shouts %}
+        <ul>
+            {%  for shout in shouts %}
+               <li> <div class="card" style="width: 30rem;">
+                    <div class="card-body">
+                         {{ shout.shout_text }}   <strong> posted </strong> {{ shout.pub_date }}
+                    </div>
+                </div>
+               </li> <br>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No posts available.<a href="{% url "social:search" %}"> Add friends</a> to see their posts here.</p>
+    {% endif %}
+{% endblock %}
