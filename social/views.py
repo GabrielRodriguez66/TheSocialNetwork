@@ -107,19 +107,25 @@ def unfriend(request, friend_pk):
 @login_required
 def search(request):
     users = SocialNetworkUser.objects.all()
+    auth = SocialNetworkUser.objects.first()
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(usuario_id=request.POST["username"])
+                users = SocialNetworkUser.objects.filter(usuario__username__contains=request.POST["username"])
     else:
         form = SearchForm()
     context = {
-        'users': users,
+        'users': [(user, auth in user.friends.all()) for user in users],
         'form': form
     }
 
     return render(request, 'social/search.html', context)
+
+
+def search_view_unfriend(request, friend_pk):
+    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    return HttpResponseRedirect(reverse('social:search'))
 
 
 @login_required
