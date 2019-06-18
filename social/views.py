@@ -13,7 +13,7 @@ from django.views.generic import ListView
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Shout
+from .models import SocialNetworkUser, Message
 
 
 @never_cache
@@ -112,10 +112,15 @@ def timeline(request):
     if request.method == 'POST':
         form = ShoutForm(request.POST or None)
         if form.is_valid():
-            Shout.objects.create(shout_text=request.POST["shout_text"], author=SocialNetworkUser.objects.first(),
-                                 pub_date=timezone.now())
+            #get all friends
+            recipients = SocialNetworkUser.objects.first().friends.all()
+            message = Message.objects.create(text=request.POST["text"], author=SocialNetworkUser.objects.first(),
+                                           pub_date=timezone.now())
+            for recipient in recipients:
+                #shout.recipients.add(request.user)
+                message.recipients.add(recipient)
             return HttpResponseRedirect(reverse("social:timeline"))
     else:
         form = ShoutForm()
-    shouts = Shout.objects.order_by('-pub_date')
-    return render(request, 'social/timeline.html', {'shouts': shouts, 'forms': form,})
+    messages = Message.objects.filter(recipients=SocialNetworkUser.objects.last()).order_by('-pub_date')
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,})
