@@ -3,7 +3,7 @@
     <h2>Please log-in</h2>
 {% endblock %}
 {% block content %}
-    <form action="{% url "social:login" %}" method="POST">
+    <form action="{% url "social:login_view" %}" method="POST">
     {% csrf_token %}
     {{ form }}
         <input type="submit" value="Log-In">

@@ -1,11 +1,15 @@
 import json
 
+import django
+from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
@@ -43,19 +47,31 @@ class MyFriendsView(ListView):
         """
         return SocialNetworkUser.objects.first().friends.all()
 
+    @method_decorator(login_required)
+    def dispatch(self, request, *args, **kwargs):
+        return super(MyFriendsView, self).dispatch(request, *args, **kwargs)
 
-def login(request):
+
+def logout_view(request):
+    django.contrib.auth.logout(request)
+    return HttpResponseRedirect(settings.LOGIN_URL)
+
+
+def login_view(request):
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
             backend = SocialNetworkBackend()
-            user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'], must_exist=True)
+            user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'],
+                                        must_exist=True)
             if user:
-                return HttpResponseRedirect(reverse("social:timeline"))
+                django.contrib.auth.login(request, user)
+                return HttpResponseRedirect(reverse("social:timeline"), request)
                 # Authenticated
             else:
-                return render(request, "social/login.html", context={'form': LoginForm(),
-                                                                     'error_message': "Username or password is incorrect"})  # Not authenticated
+                # Not authenticated
+                return render(request, "social/login.html",
+                              context={'form': LoginForm(), 'error_message': "Username or password is incorrect"})
     elif request.method == "GET":
         return render(request, "social/login.html", context={'form': LoginForm()})
 
@@ -86,41 +102,54 @@ def register(request):
         return Http404()
 
 
+@login_required
 def unfriend(request, friend_pk):
-    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    get_object_or_404(SocialNetworkUser, pk=request.user).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:my_friends'))
 
 
+@login_required
 def search(request):
     users = SocialNetworkUser.objects.all()
+    auth = SocialNetworkUser.objects.first()
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(usuario_id=request.POST["username"])
+                users = SocialNetworkUser.objects.filter(usuario__username__contains=request.POST["username"])
     else:
         form = SearchForm()
     context = {
-        'users': users,
+        'users': [(user, auth in user.friends.all()) for user in users],
         'form': form
     }
 
     return render(request, 'social/search.html', context)
 
 
+def search_view_unfriend(request, friend_pk):
+    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    return HttpResponseRedirect(reverse('social:search'))
+
+
+@login_required
 def timeline(request):
     if request.method == 'POST':
         form = ShoutForm(request.POST or None)
         if form.is_valid():
             #get all friends
-            recipients = SocialNetworkUser.objects.first().friends.all()
-            message = Message.objects.create(text=request.POST["text"], author=SocialNetworkUser.objects.first(),
+            recipients = request.user.socialnetworkuser.friends.all()
+            message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
                                            pub_date=timezone.now())
+            message.recipients.add(request.user.socialnetworkuser)
             for recipient in recipients:
-                #shout.recipients.add(request.user)
                 message.recipients.add(recipient)
             return HttpResponseRedirect(reverse("social:timeline"))
     else:
         form = ShoutForm()
-    messages = Message.objects.filter(recipients=SocialNetworkUser.objects.last()).order_by('-pub_date')
+    messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
     return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,})
+
+
+def home(request):
+    return HttpResponseRedirect(reverse("social:timeline"))

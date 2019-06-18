@@ -16,10 +16,6 @@ class InvalidServiceAccount(Exception):
     pass
 
 
-def login_user(user, request):
-    request.user = user
-
-
 class ActiveDirectoryBackend(ModelBackend):
     def __init__(self, *args, **kwargs):
         self.ad_url = settings.NOTARIAT_AD['ad_url']
@@ -51,7 +47,6 @@ class ActiveDirectoryBackend(ModelBackend):
                 con = self.bind(dn=dn, pwd=password)
                 if not user:
                     user = User(username=username, password='', is_active=True, is_staff=True, is_superuser=False)
-                login_user(user, request)
                 return user
             except ldap.INVALID_CREDENTIALS:
                 return None
@@ -65,7 +60,6 @@ class ActiveDirectoryBackend(ModelBackend):
 
     def get_user(self, user_id):
         try:
-            User = settings.AUTH_USER_MODEL
             return User.objects.get(pk=user_id)
         except User.DoesNotExist:
             return None
