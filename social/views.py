@@ -11,7 +11,7 @@ from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm
+from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
 from .models import SocialNetworkUser, Shout
 
@@ -44,13 +44,20 @@ class MyFriendsView(ListView):
         return SocialNetworkUser.objects.first().friends.all()
 
 
-def login(request, username, password):
-    backend = SocialNetworkBackend()
-    user = backend.authenticate(username, password)
-    if user:
-        pass  # Authenticated
-    else:
-        pass  # Not authenticated
+def login(request):
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            backend = SocialNetworkBackend()
+            user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'], must_exist=True)
+            if user:
+                return HttpResponseRedirect(reverse("social:timeline"))
+                # Authenticated
+            else:
+                return render(request, "social/login.html", context={'form': LoginForm(),
+                                                                     'error_message': "Username or password is incorrect"})  # Not authenticated
+    elif request.method == "GET":
+        return render(request, "social/login.html", context={'form': LoginForm()})
 
 
 def register(request):
@@ -59,13 +66,18 @@ def register(request):
         if form.is_valid():
             auth_only_backend = SocialNetworkBackend()
             authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
-                                                           form.cleaned_data['password'])
+                                                           form.cleaned_data['password'], must_exist=False)
             if authenticated:
-                user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
-                auth_only_backend.create_user(username=user_info['nombre_usuario'])
-                return HttpResponseRedirect(reverse("social:timeline"))
+                if not SocialNetworkUser.objects.filter(usuario__username=authenticated.username).exists():
+                    user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
+                    auth_only_backend.create_user(authenticated, user_info)
+                    return HttpResponseRedirect(reverse("social:timeline"))
+                else:
+                    return render(request, "social/register.html", context={'form': form,
+                                                                            'error_message': 'User already exists'})
             else:
-                return render(request, "social/register.html", context={'form': form})
+                return render(request, "social/register.html", context={'form': form,
+                                                                'error_message': 'Username or Password is incorrect.'})
         else:
             return render(request, "social/register.html", context={'form': form})
     elif request.method == 'GET':
