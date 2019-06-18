@@ -66,13 +66,18 @@ def register(request):
         if form.is_valid():
             auth_only_backend = SocialNetworkBackend()
             authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
-                                                           form.cleaned_data['password'])
+                                                           form.cleaned_data['password'], must_exist=False)
             if authenticated:
-                user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
-                auth_only_backend.create_user(username=user_info['nombre_usuario'])
-                return HttpResponseRedirect(reverse("social:timeline"))
+                if not SocialNetworkUser.objects.filter(usuario__username=authenticated.username).exists():
+                    user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
+                    auth_only_backend.create_user(authenticated, user_info)
+                    return HttpResponseRedirect(reverse("social:timeline"))
+                else:
+                    return render(request, "social/register.html", context={'form': form,
+                                                                            'error_message': 'User already exists'})
             else:
-                return render(request, "social/register.html", context={'form': form})
+                return render(request, "social/register.html", context={'form': form,
+                                                                'error_message': 'Username or Password is incorrect.'})
         else:
             return render(request, "social/register.html", context={'form': form})
     elif request.method == 'GET':
