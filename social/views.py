@@ -90,7 +90,7 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(username=request.POST["username"])
+                users = SocialNetworkUser.objects.filter(usuario_id=request.POST["username"])
     else:
         form = SearchForm()
     context = {
