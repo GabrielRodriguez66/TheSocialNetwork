@@ -1,6 +1,7 @@
 import json
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
@@ -87,7 +88,7 @@ def register(request):
 
 
 def unfriend(request, friend_pk):
-    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    get_object_or_404(SocialNetworkUser, pk=request.user).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:my_friends'))
 
 
@@ -108,6 +109,7 @@ def search(request):
     return render(request, 'social/search.html', context)
 
 
+@login_required
 def timeline(request):
     if request.method == 'POST':
         form = ShoutForm(request.POST or None)
