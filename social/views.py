@@ -1,5 +1,7 @@
 import json
 
+import django
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
@@ -34,6 +36,7 @@ def asocia_usuario(request):
     return response
 
 
+@login_required
 class MyFriendsView(ListView):
     template_name = 'social/my_friends.html'
     context_object_name = 'my_friends_list'
@@ -45,18 +48,26 @@ class MyFriendsView(ListView):
         return SocialNetworkUser.objects.first().friends.all()
 
 
-def login(request):
+def logout_view(request):
+    django.contrib.auth.logout(request)
+    return HttpResponseRedirect(settings.LOGIN_URL)
+
+
+def login_view(request):
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
             backend = SocialNetworkBackend()
-            user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'], must_exist=True)
+            user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'],
+                                        must_exist=True)
             if user:
-                return HttpResponseRedirect(reverse("social:timeline"))
+                django.contrib.auth.login(request, user)
+                return HttpResponseRedirect(reverse("social:timeline"), request)
                 # Authenticated
             else:
-                return render(request, "social/login.html", context={'form': LoginForm(),
-                                                                     'error_message': "Username or password is incorrect"})  # Not authenticated
+                # Not authenticated
+                return render(request, "social/login.html",
+                              context={'form': LoginForm(), 'error_message': "Username or password is incorrect"})
     elif request.method == "GET":
         return render(request, "social/login.html", context={'form': LoginForm()})
 
@@ -87,11 +98,13 @@ def register(request):
         return Http404()
 
 
+@login_required
 def unfriend(request, friend_pk):
     get_object_or_404(SocialNetworkUser, pk=request.user).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:my_friends'))
 
 
+@login_required
 def search(request):
     users = SocialNetworkUser.objects.all()
     if request.method == 'POST':
@@ -121,3 +134,7 @@ def timeline(request):
         form = ShoutForm()
     shouts = Shout.objects.order_by('-pub_date')
     return render(request, 'social/timeline.html', {'shouts': shouts, 'forms': form,})
+
+
+def home(request):
+    return HttpResponseRedirect(reverse("social:timeline"))

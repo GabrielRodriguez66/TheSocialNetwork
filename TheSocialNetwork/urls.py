@@ -19,7 +19,7 @@ from django.urls import path, include
 from social import views
 
 urlpatterns = [
-    path('', views.register, name='register'),
+    path('', views.home, name='home'),
     path('social/', include('social.urls')),
     path('admin/', admin.site.urls),
 ]
