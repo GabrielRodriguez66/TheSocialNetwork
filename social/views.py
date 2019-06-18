@@ -10,7 +10,6 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
-from social.admin import AutenticaSiNoExisteBackend
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm
 from .forms import SearchForm, ShoutForm
@@ -58,15 +57,20 @@ def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            auth_only_backend = AutenticaSiNoExisteBackend()
+            auth_only_backend = SocialNetworkBackend()
             authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
-                                                           form.cleaned_data['password'])
+                                                           form.cleaned_data['password'], must_exist=False)
             if authenticated:
-                user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
-                auth_only_backend.create_user(username=user_info['nombre_usuario'])
-                return HttpResponseRedirect(reverse("social:timeline"))
+                if not SocialNetworkUser.objects.filter(usuario__username=authenticated.username).exists():
+                    user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
+                    auth_only_backend.create_user(authenticated, user_info)
+                    return HttpResponseRedirect(reverse("social:timeline"))
+                else:
+                    return render(request, "social/register.html", context={'form': form,
+                                                                            'error_message': 'User already exists'})
             else:
-                return render(request, "social/register.html", context={'form': form})
+                return render(request, "social/register.html", context={'form': form,
+                                                                'error_message': 'Username or Password is incorrect.'})
         else:
             return render(request, "social/register.html", context={'form': form})
     elif request.method == 'GET':
