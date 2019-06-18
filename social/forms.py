@@ -5,7 +5,7 @@ from social.widgets import BuscadorDeUsuarioField
 
 
 class ShoutForm(forms.Form):
-    shout_text = forms.CharField(widget=forms.Textarea(attrs={'rows':2, 'cols':50}), label='Shout', max_length=100, required=True)
+    shout_text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Shout', max_length=240, required=True)
 
 
 class SearchForm(forms.Form):
@@ -16,8 +16,8 @@ class RegisterForm(forms.Form):
     template = "social/register.html"
     buscador_de_usuario = BuscadorDeUsuarioField(url="/social/asocia_usuario/",
                                                  timeout_milliseconds=8000,
-                                                 label=u"Nombre de usuario a asociar", initial=u"Buscar...")
-    password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput)
+                                                 label=u"Nombre de usuario a asociar", initial=u"Buscar...", required=True)
+    password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput, required=True)
 
     # def clean_buscador_de_usuario(self):
     #     if self.data['username'] == "":
