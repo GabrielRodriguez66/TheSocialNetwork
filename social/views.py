@@ -10,7 +10,6 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
-from social.admin import AutenticaSiNoExisteBackend
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm
 from .forms import SearchForm, ShoutForm
@@ -58,7 +57,7 @@ def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            auth_only_backend = AutenticaSiNoExisteBackend()
+            auth_only_backend = SocialNetworkBackend()
             authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
                                                            form.cleaned_data['password'])
             if authenticated:
