@@ -4,15 +4,17 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
-from django.shortcuts import render
-from django.urls import reverse
+from django.shortcuts import render, reverse
+from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 from django.views.generic import ListView
 
-from social.admin import SocialNetworkBackend, AutenticaSiNoExisteBackend
+from social.admin import AutenticaSiNoExisteBackend
+from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm
-from .models import SocialNetworkUser
+from .forms import SearchForm, ShoutForm
+from .models import SocialNetworkUser, Shout
 
 
 @never_cache
@@ -76,3 +78,33 @@ def register(request):
 def unfriend(request, friend_pk):
     get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:my_friends'))
+
+
+def search(request):
+    users = SocialNetworkUser.objects.all()
+    if request.method == 'POST':
+        form = SearchForm(request.POST)
+        if form.is_valid():
+            if request.POST["username"] != '':
+                users = SocialNetworkUser.objects.filter(username=request.POST["username"])
+    else:
+        form = SearchForm()
+    context = {
+        'users': users,
+        'form': form
+    }
+
+    return render(request, 'social/search.html', context)
+
+
+def timeline(request):
+    if request.method == 'POST':
+        form = ShoutForm(request.POST or None)
+        if form.is_valid():
+            Shout.objects.create(shout_text=request.POST["shout_text"], author=SocialNetworkUser.objects.first(),
+                                 pub_date=timezone.now())
+            return HttpResponseRedirect(reverse("social:timeline"))
+    else:
+        form = ShoutForm()
+    shouts = Shout.objects.order_by('-pub_date')
+    return render(request, 'social/timeline.html', {'shouts': shouts, 'forms': form,})

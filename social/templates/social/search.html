@@ -1,0 +1,13 @@
+<h1>Search Users</h1>
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form }}
+    <button type="submit">search</button>
+</form>
+<ul>
+{% for user in users.all %}
+    <li>
+        {{ user.username }}
+    </li>
+{% endfor %}
+</ul>
