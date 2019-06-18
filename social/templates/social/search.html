@@ -4,7 +4,7 @@
     <form action="" method="POST">
         {% csrf_token %}
         {{ form }}
-        <button type="submit">search</button>
+        <button class="btn btn-primary btn-sm" type="submit">search</button>
     </form>
     <ul>
         {% for user in users.all %}
@@ -13,4 +13,4 @@
             </li>
         {% endfor %}
     </ul>
-{% endblock %}
+{% endblock%}
