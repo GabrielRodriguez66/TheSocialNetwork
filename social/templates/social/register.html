@@ -1,7 +1,10 @@
 
-<h1>Welcome to Rama Judicial Social Network</h1>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<h1><font color="#40e0d0">Welcome to Rama Judicial Social Network</font></h1>
+
 {% block title %}
-<h2>Please register or log-in</h2>
+<h2>Please register</h2>
 {%  endblock %}
 
     {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
@@ -11,5 +14,5 @@
         {{ form }}
         <input type="submit" value="Register">
     </form>
-<a href="{% url 'social:login_view' %}">Already a user? Click here to log-in!</a>
+    <b><i><u><a href="{% url 'social:login_view' %}">Already a user? Click here to log-in!</a></u></i></b>
 {%  endblock %}

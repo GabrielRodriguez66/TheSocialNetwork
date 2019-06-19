@@ -4,13 +4,14 @@ from . import views
 
 app_name = 'social'
 urlpatterns = [
-    path("friends/", views.MyFriendsView.as_view(), name="my_friends"),
+    path("chat/<int:friend_pk>/<str:view>", views.chat_manager, name="chat"),
+    path("friends/", views.friends_view, name="friends"),
     path('timeline/', views.timeline, name='timeline'),
     path('search/', views.search, name="search"),
     path(r"register/", views.register, name="register"),
     path("friend/<int:friend_pk>", views.friend_request, name="friend_request"),
-    path("unfriend/<int:friend_pk>", views.unfriend, name="unfriend"),
-    path("sunfriend/<int:friend_pk>", views.search_view_unfriend, name="search_unfriend"),
+    path("respond/<int:request_pk>", views.respond_request, name="respond_request"),
+    path("unfriend/<int:friend_pk>/<str:view>", views.unfriend, name="unfriend"),
     path(r'asocia_usuario/', views.asocia_usuario, name='asocia_usuario'),
     path("login/", views.login_view, name="login_view"),
     path("logout/", views.logout_view, name="logout_view"),
