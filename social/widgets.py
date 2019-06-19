@@ -72,11 +72,11 @@ class BuscadorDeUsuarioWidget(forms.Widget):
                     }
                 }
             </script>
-            <table  width="50%%" ><tr><td>
+            <tr><td>
                 <input id="id_buscador_de_usuario" type="text" name="%s" value=""> &nbsp; &nbsp;
                 </td><td><input id="boton_de_busqueda" type="button" name="boton" value="Buscar..." onclick=search_and_display_user("busqueda_btn")> </td></tr>
                 <tr><td colspan="2" > <div id="resultado_busqueda">&nbsp;</div> </td></tr>
-            </table>
+            
            """
         return html_fragment % (self.user_lookup_url, self.timeout_milliseconds, html.escape(name))
 
