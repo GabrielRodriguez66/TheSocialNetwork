@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message
+from .models import SocialNetworkUser, Message, FriendRequested
 
 
 @never_cache
@@ -102,6 +102,7 @@ def unfriend(request, friend_pk, view):
 def search(request):
     users = SocialNetworkUser.objects.exclude(usuario=request.user)
     auth = request.user.socialnetworkuser
+
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
@@ -113,9 +114,31 @@ def search(request):
         'users': [(user, auth in user.friends.all()) for user in users],
         'form': form,
         'chat': ShoutForm(),
+        'auth_user': auth
     }
-
     return render(request, 'social/search.html', context)
+
+
+def friend_request(request, friend_pk):
+    req = FriendRequested.objects.create(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk)
+    request.user.socialnetworkuser.requesting.add(req)
+    return HttpResponseRedirect(reverse('social:search'))
+
+
+def respond_request(request, request_pk, accepted):
+    req = get_object_or_404(FriendRequested, pk=request_pk)
+    dest = req.destinatario
+    rem = req.remitente
+    if accepted == 1:
+        dest.friends.add(rem)
+    rem.requesting.remove(req)
+    FriendRequested.objects.filter(pk=request_pk).delete()
+    return HttpResponseRedirect(reverse('social:timeline'))
+
+
+def search_view_unfriend(request, friend_pk):
+    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    return HttpResponseRedirect(reverse('social:search'))
 
 
 @login_required
@@ -134,7 +157,8 @@ def timeline(request):
     else:
         form = ShoutForm()
     messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
-    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,})
+    friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form, 'friend_requests': friend_requests,})
 
 
 def home(request):
