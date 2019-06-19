@@ -15,7 +15,7 @@ from django.views.decorators.http import require_http_methods
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message, FriendRequested
+from .models import SocialNetworkUser, Message, FriendRequested, REQUEST_STATUS_CHOICES, PENDING_STATUS, ACCEPTED_STATUS, REJECTED_STATUS, IGNORED_STATUS, CANCELED_STATUS
 
 
 @never_cache
@@ -111,7 +111,7 @@ def search(request):
     else:
         form = SearchForm()
     context = {
-        'users': [(user, auth in user.friends.all()) for user in users],
+        'users': [(user, auth in user.friends.all(), FriendRequested.objects.filter(destinatario=user, remitente=auth, status=PENDING_STATUS).first()) for user in users],
         'form': form,
         'chat': ShoutForm(),
         'auth_user': auth
@@ -120,8 +120,10 @@ def search(request):
 
 
 def friend_request(request, friend_pk):
-    req = FriendRequested.objects.create(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk)
-    request.user.socialnetworkuser.requesting.add(req)
+    if not FriendRequested.objects.filter(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk,
+                                          status=PENDING_STATUS).first():
+        req = FriendRequested.objects.create(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk)
+        request.user.socialnetworkuser.requesting.add(req)
     return HttpResponseRedirect(reverse('social:search'))
 
 
@@ -129,10 +131,23 @@ def respond_request(request, request_pk, accepted):
     req = get_object_or_404(FriendRequested, pk=request_pk)
     dest = req.destinatario
     rem = req.remitente
-    if accepted == 1:
+    status_choices = dict(REQUEST_STATUS_CHOICES)
+    if accepted == ACCEPTED_STATUS:
         dest.friends.add(rem)
-    rem.requesting.remove(req)
-    FriendRequested.objects.filter(pk=request_pk).delete()
+        req.status = ACCEPTED_STATUS
+        message = Message.objects.create(text=status_choices.get(ACCEPTED_STATUS), author=dest,
+                                         pub_date=timezone.now())
+        message.recipients.add(rem)
+    elif accepted == REJECTED_STATUS:
+        req.status = REJECTED_STATUS
+        message = Message.objects.create(text=status_choices.get(REJECTED_STATUS), author=dest,
+                                         pub_date=timezone.now())
+        message.recipients.add(rem)
+    elif accepted == IGNORED_STATUS:
+        req.status = IGNORED_STATUS
+    elif accepted == CANCELED_STATUS:
+        req.status = CANCELED_STATUS
+    req.save()
     return HttpResponseRedirect(reverse('social:timeline'))
 
 
@@ -157,8 +172,10 @@ def timeline(request):
     else:
         form = ShoutForm()
     messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
-    friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
-    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form, 'friend_requests': friend_requests,})
+    friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id,
+                                                     status=PENDING_STATUS)
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,
+                                                    'friend_requests': friend_requests, })
 
 
 def home(request):
