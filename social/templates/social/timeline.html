@@ -26,9 +26,9 @@
                         {%  for req in friend_requests %}
                             <li>
                                 <div class="card-body">
-                                    <h5>req.remitente.usuario.first_name</h5>
-                                    <a href="#" class ="btn btn-success"> Accept </a>
-                                    <a href="#" class ="btn btn-danger"> Reject </a>
+                                    <h5>{{ req.remitente.usuario.first_name }}</h5>
+                                    <a href="{% url "social:respond_request" req.pk 1 %}" class ="btn btn-success"> Accept </a>
+                                    <a href="{% url "social:respond_request" req.pk 0 %}" class ="btn btn-danger"> Reject </a>
                                 </div>
                             </li> <br>
                         {% endfor %}

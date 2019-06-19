@@ -129,9 +129,9 @@ def respond_request(request, request_pk, accepted):
     req = get_object_or_404(FriendRequested, pk=request_pk)
     dest = req.destinatario
     rem = req.remitente
-    if accepted:
+    if accepted == 1:
         dest.friends.add(rem)
-    # rem.requesting.remove(req)
+    rem.requesting.remove(req)
     FriendRequested.objects.filter(pk=request_pk).delete()
     return HttpResponseRedirect(reverse('social:timeline'))
 
@@ -158,7 +158,7 @@ def timeline(request):
         form = ShoutForm()
     messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
-    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form, 'hasRequests': friend_requests,})
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form, 'friend_requests': friend_requests,})
 
 
 def home(request):
