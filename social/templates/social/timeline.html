@@ -8,7 +8,7 @@
         <a class="nav-link" id="navSearch" href="{%  url "social:search" %}">Search</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navMyFriends" href=" {%  url "social:my_friends" %}">My friends</a>
+        <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
@@ -22,8 +22,6 @@
         {{ forms }}
         <input class="btn btn-info btn-sm" id="submitButton" type="submit" value="Submit">
     </form>
-
-
 
     {%  if shouts %}
         <ul>
