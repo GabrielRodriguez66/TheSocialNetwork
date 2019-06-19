@@ -9,15 +9,13 @@ from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
 from django.utils import timezone
-from django.utils.decorators import method_decorator
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
-from django.views.generic import ListView
 
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Shout
+from .models import SocialNetworkUser, Message
 
 
 @never_cache
@@ -37,19 +35,11 @@ def asocia_usuario(request):
     return response
 
 
-class MyFriendsView(ListView):
-    template_name = 'social/my_friends.html'
-    context_object_name = 'my_friends_list'
-
-    def get_queryset(self):
-        """
-            Excludes any questions that aren't published yet.
-        """
-        return SocialNetworkUser.objects.first().friends.all()
-
-    @method_decorator(login_required)
-    def dispatch(self, request, *args, **kwargs):
-        return super(MyFriendsView, self).dispatch(request, *args, **kwargs)
+@login_required
+def friends_view(request, friend_pk=None, view=None):
+    form = ShoutForm()
+    friends = request.user.socialnetworkuser.friends.all()
+    return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form, })
 
 
 def logout_view(request):
@@ -103,15 +93,15 @@ def register(request):
 
 
 @login_required
-def unfriend(request, friend_pk):
-    get_object_or_404(SocialNetworkUser, pk=request.user).friends.remove(friend_pk)
-    return HttpResponseRedirect(reverse('social:my_friends'))
+def unfriend(request, friend_pk, view):
+    get_object_or_404(SocialNetworkUser, pk=request.user.socialnetworkuser.id).friends.remove(friend_pk)
+    return HttpResponseRedirect(reverse('social:'+view))
 
 
 @login_required
 def search(request):
-    users = SocialNetworkUser.objects.all()
-    auth = SocialNetworkUser.objects.first()
+    users = SocialNetworkUser.objects.exclude(usuario=request.user)
+    auth = request.user.socialnetworkuser
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
@@ -121,15 +111,11 @@ def search(request):
         form = SearchForm()
     context = {
         'users': [(user, auth in user.friends.all()) for user in users],
-        'form': form
+        'form': form,
+        'chat': ShoutForm(),
     }
 
     return render(request, 'social/search.html', context)
-
-
-def search_view_unfriend(request, friend_pk):
-    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
-    return HttpResponseRedirect(reverse('social:search'))
 
 
 @login_required
@@ -137,14 +123,31 @@ def timeline(request):
     if request.method == 'POST':
         form = ShoutForm(request.POST or None)
         if form.is_valid():
-            Shout.objects.create(shout_text=request.POST["shout_text"], author=SocialNetworkUser.objects.first(),
-                                 pub_date=timezone.now())
+            #get all friends
+            recipients = request.user.socialnetworkuser.friends.all()
+            message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
+                                           pub_date=timezone.now())
+            message.recipients.add(request.user.socialnetworkuser)
+            for recipient in recipients:
+                message.recipients.add(recipient)
             return HttpResponseRedirect(reverse("social:timeline"))
     else:
         form = ShoutForm()
-    shouts = Shout.objects.order_by('-pub_date')
-    return render(request, 'social/timeline.html', {'shouts': shouts, 'forms': form,})
+    messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,})
 
 
 def home(request):
     return HttpResponseRedirect(reverse("social:timeline"))
+
+
+@login_required
+def chat_manager(request, friend_pk, view):
+    form = ShoutForm(request.POST or None)
+    if form.is_valid():
+        message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
+                                         pub_date=timezone.now())
+        recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
+        message.recipients.add(request.user.socialnetworkuser)
+        message.recipients.add(recipient)
+        return HttpResponseRedirect(reverse("social:"+view))

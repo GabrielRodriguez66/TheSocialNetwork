@@ -1,18 +1,68 @@
 {% extends 'social/base.html' %}
+
+{% block active %}
+    <li class="nav-item">
+        <a class="nav-link" id="navTimeline" href="{%  url "social:timeline" %}">Timeline</a>
+    </li>
+    <li class="nav-item active">
+        <a class="nav-link" id="navSearch" href="{%  url "social:search" %}">Search<span class="sr-only">(current)</span></a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
+    </li>
+{% endblock%}
+
 {% block content %}
     <h1>Search Users</h1>
     <form action="" method="POST">
         {% csrf_token %}
         {{ form }}
-        <button class="btn btn-primary btn-sm" type="submit">search</button>
+        <button class="btn btn-primary btn-sm" name="search" type="submit">search</button>
     </form>
     <ul>
         {% for user, is_friend in users %}
             <li>
                 {{ user.usuario.username }} - {{ is_friend }}
                 {% if is_friend %}
-                    <button class="btn btn-success btn-sm">Chat</button>
-                    <a href="{% url "social:search_unfriend" user.usuario.id %}" class="btn btn-danger btn-sm">Unfriend</a>
+                     <!-- Button trigger modal -->
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat">
+                        Chat
+                    </button>
+
+                    <!-- Modal -->
+                    <div class="modal fade" id="Modal-Chat" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-scrollable" role="document">
+                            <div class="modal-content">
+                                <div class="modal-header">
+
+                                    <h5 class="modal-title" id="ModalScrollableTitle"> Chat </h5>
+
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                        <span aria-hidden="true">&times;</span>
+                                    </button>
+
+                                </div>
+
+                                <form action="{% url 'social:chat' user.id "search"%}" method="POST">
+                                    {% csrf_token %}
+                                    <div class="modal-body">
+                                        {{ chat }}
+                                    </div>
+
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                        <input type="submit" class="btn btn-primary" name="chat" value="Send">
+                                    </div>
+                                </form>
+
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url "social:unfriend" user.usuario.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
+
                 {% else %}
                     <button class="btn btn-success btn-sm">Add Friend</button>
                 {% endif %}
