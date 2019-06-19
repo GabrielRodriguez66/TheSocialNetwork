@@ -17,7 +17,7 @@ from django.views.generic import ListView
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message
+from .models import SocialNetworkUser, Message, FriendRequested
 
 
 @never_cache
@@ -148,7 +148,8 @@ def timeline(request):
     else:
         form = ShoutForm()
     messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
-    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,})
+    friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form, 'hasRequests': friend_requests,})
 
 
 def home(request):

@@ -1,13 +1,33 @@
 {% extends 'social/base.html' %}
 {% block content %}
     <h1>Timeline</h1>
+    <div class="card" style="margin-left: 20px; width: 40rem;">
+        <div class="card-body" >
+            <h5 class="card-title">Friend requests</h5>
+            <div>
+                {%  if friend_requests %}
+                    <ul>
+                        {%  for req in friend_requests %}
+                            <li>
+                                <div class="card-body">
+                                    <h5>req.remitente.usuario.first_name</h5>
+                                    <a href="#" class ="btn btn-success"> Accept </a>
+                                    <a href="#" class ="btn btn-danger"> Reject </a>
+                                </div>
+                            </li> <br>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No friend requests.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div> <br> <br>
     <form action="" method="post">
         {% csrf_token %}
         {{ forms }}
         <input class="btn btn-info btn-sm" id="submitButton" type="submit" value="Submit">
     </form>
-
-
 
     {%  if shouts %}
         <ul>
