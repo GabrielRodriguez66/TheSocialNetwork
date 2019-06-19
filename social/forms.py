@@ -5,7 +5,7 @@ from social.widgets import BuscadorDeUsuarioField
 
 
 class ShoutForm(forms.Form):
-    shout_text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Shout', max_length=240, required=True)
+    text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Shout', max_length=240, required=True)
 
 
 class SearchForm(forms.Form):
