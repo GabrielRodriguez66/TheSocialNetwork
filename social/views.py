@@ -45,7 +45,7 @@ class MyFriendsView(ListView):
         """
             Excludes any questions that aren't published yet.
         """
-        return SocialNetworkUser.objects.first().friends.all()
+        return self.request.user.socialnetworkuser.friends.all()
 
     @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
@@ -110,8 +110,8 @@ def unfriend(request, friend_pk):
 
 @login_required
 def search(request):
-    users = SocialNetworkUser.objects.all()
-    auth = SocialNetworkUser.objects.first()
+    users = SocialNetworkUser.objects.exclude(usuario=request.user)
+    auth = request.user.socialnetworkuser
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
@@ -128,7 +128,7 @@ def search(request):
 
 
 def search_view_unfriend(request, friend_pk):
-    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    get_object_or_404(SocialNetworkUser, pk=request.user.socialnetworkuser.id).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:search'))
 
 

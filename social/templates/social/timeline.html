@@ -1,4 +1,20 @@
 {% extends 'social/base.html' %}
+
+{% block active %}
+    <li class="nav-item active">
+        <a class="nav-link" id="navTimeline" href="{%  url "social:timeline" %}">Timeline<span class="sr-only">(current)</span></a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navSearch" href="{%  url "social:search" %}">Search</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navMyFriends" href=" {%  url "social:my_friends" %}">My friends</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
+    </li>
+{% endblock%}
+
 {% block content %}
     <h1>Timeline</h1>
     <form action="" method="post">
