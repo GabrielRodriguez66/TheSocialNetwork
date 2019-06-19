@@ -16,8 +16,9 @@ class RegisterForm(forms.Form):
     template = "social/register.html"
     buscador_de_usuario = BuscadorDeUsuarioField(url="/social/asocia_usuario/",
                                                  timeout_milliseconds=8000,
-                                                 label=u"Nombre de usuario", initial=u"Buscar...", required=True)
-    password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput, required=True)
+                                                 label=u"Nombre de usuario", initial=u"Buscar...",
+                                                 required=True)
+    password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput, required=True, strip=True)
 
     # def clean_buscador_de_usuario(self):
     #     if self.data['username'] == "":
@@ -36,8 +37,8 @@ class RegisterForm(forms.Form):
 
 class LoginForm(forms.Form):
     template = "social/login.html"
-    username = forms.CharField(label=u"Nombre de usuario")
-    password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput)
+    username = forms.CharField(label=u"Nombre de usuario", strip=True)
+    password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput, strip=True)
 
     def clean_password(self):
         password = self.data['password']
