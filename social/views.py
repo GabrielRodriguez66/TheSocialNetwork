@@ -17,7 +17,7 @@ from django.views.generic import ListView
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message
+from .models import SocialNetworkUser, Message, FriendRequested
 
 
 @never_cache
@@ -112,6 +112,7 @@ def unfriend(request, friend_pk):
 def search(request):
     users = SocialNetworkUser.objects.exclude(usuario=request.user)
     auth = request.user.socialnetworkuser
+
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
@@ -121,10 +122,27 @@ def search(request):
         form = SearchForm()
     context = {
         'users': [(user, auth in user.friends.all()) for user in users],
-        'form': form
+        'form': form,
+        'auth_user': auth
     }
-
     return render(request, 'social/search.html', context)
+
+
+def friend_request(request, friend_pk):
+    req = FriendRequested.objects.create(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk)
+    request.user.socialnetworkuser.requesting.add(req)
+    return HttpResponseRedirect(reverse('social:search'))
+
+
+def respond_request(request, request_pk, accepted):
+    req = get_object_or_404(FriendRequested, pk=request_pk)
+    dest = req.destinatario
+    rem = req.remitente
+    if accepted:
+        dest.friends.add(rem)
+    # rem.requesting.remove(req)
+    FriendRequested.objects.filter(pk=request_pk).delete()
+    return HttpResponseRedirect(reverse('social:timeline'))
 
 
 def search_view_unfriend(request, friend_pk):

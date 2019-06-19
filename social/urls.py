@@ -8,6 +8,7 @@ urlpatterns = [
     path('timeline/', views.timeline, name='timeline'),
     path('search/', views.search, name="search"),
     path(r"register/", views.register, name="register"),
+    path("friend/<int:friend_pk>", views.friend_request, name="friend_request"),
     path("unfriend/<int:friend_pk>", views.unfriend, name="unfriend"),
     path("sunfriend/<int:friend_pk>", views.search_view_unfriend, name="search_unfriend"),
     path(r'asocia_usuario/', views.asocia_usuario, name='asocia_usuario'),
