@@ -188,8 +188,8 @@ def chat_manager(request, friend_pk, view):
 def profile(request):
     if request.user.socialnetworkuser.has_pic:
         data = UploadedPic.objects.get(user=request.user.socialnetworkuser)
-        pic_data = data.pic
-        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[1]
+        pic_data = str(bytes(data.pic)).split("'")[1]
+        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
     else:
         pic = "/static/social/images/default.jpg"
     if request.method == "POST":
