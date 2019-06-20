@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
@@ -146,6 +147,9 @@ def search_view_unfriend(request, friend_pk):
 
 @login_required
 def timeline(request):
+
+    # TODO: Fix filters !!!
+
     messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
         recipients=request.user.socialnetworkuser)).order_by('-pub_date')
     senderform = SearchForm(request.POST)
@@ -166,14 +170,17 @@ def timeline(request):
         if request.POST['filter'] == '2':
             if receiverform.is_valid():
                 if request.POST["username"] != '':
-                    messages = Message.objects.filter(recipients=request.POST["username"]).order_by('-pub_date')
+                    user = SocialNetworkUser.objects.filter(usuario__username__contains=request.POST["username"])
+                    messages = Message.objects.filter(recipients=user, allowed=True).order_by('-pub_date')
         if request.POST['filter'] == '3':
-            messages = Message.objects.filter(pub_date__day=timezone.now().day).order_by('-pub_date')
+            messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
+                recipients__in=[request.user.socialnetworkuser]), pub_date__day=timezone.now().day).order_by('-pub_date')
         if request.POST['filter'] == '4':
-            messages = Message.objects.filter(pub_date__day=timezone.now().day).order_by('-pub_date')
+            messages = Message.objects.filter(recipients__in=[request.user.socialnetworkuser],
+                                              author=request.user.socialnetworkuser, chat=None).order_by('-pub_date')
         if request.POST['filter'] == '5':
             messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
-                recipients=request.user.socialnetworkuser)).order_by('-pub_date')
+                recipients__in=[request.user.socialnetworkuser])).order_by('-pub_date')
     else:
         form = ShoutForm()
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
@@ -194,12 +201,12 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
     form = ChatForm(request.POST or None) if chat_pk is not None else ShoutForm(request.POST or None)
     if form.is_valid():
         message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
-                                               pub_date=timezone.now())
+                                         pub_date=timezone.now())
         recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
         message.recipients.add(recipient)
         if chat_pk is not None:
             chat = Chat.objects.create(creation_date=timezone.now()) if chat_pk == 0 else get_object_or_404(Chat,
-                                                                                                             pk=chat_pk)
+                                                                                                            pk=chat_pk)
             message.chat = chat
             message.save()
             creation_date = chat.creation_date

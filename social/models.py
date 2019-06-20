@@ -26,12 +26,9 @@ class Message(models.Model):
     text = models.TextField()
     pub_date = models.DateTimeField('date published', default=datetime.now())
     author = models.ForeignKey(SocialNetworkUser, on_delete=models.CASCADE)
-    recipients = models.ManyToManyField(SocialNetworkUser, related_name="friend_list", blank=True)
+    recipients = models.ManyToManyField(SocialNetworkUser, related_name="friend_list", through="Recibido", blank=True)
     chat = models.ForeignKey(Chat, on_delete=models.SET_NULL, null=True)
 
-
-
-
-
-
-
+# class Recibido(models.Model):
+#     message_id = models.ForeignKey(Message, on_delete=models.CASCADE)
+#     user_id = models.ForeignKey(SocialNetworkUser, on_delete=models.CASCADE)
