@@ -9,7 +9,7 @@ class ShoutForm(forms.Form):
 
 
 class SearchForm(forms.Form):
-    username = forms.CharField(label='Search', max_length=20, required=False)
+    username = forms.CharField(label='Search', max_length=120, required=False)
 
 
 class RegisterForm(forms.Form):

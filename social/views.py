@@ -108,9 +108,12 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-
-                users = SocialNetworkUser.objects.filter(Q(usuario__username__icontains=request.POST["username"]) or
-                                                         Q(usuario__username__trigram_similar=request.POST["username"]))
+                users = SocialNetworkUser.objects.filter(usuario__username__iexact=request.POST["username"])
+                if not users.first():
+                    users = SocialNetworkUser.objects.filter(
+                        Q(usuario__username__trigram_similar=request.POST["username"])
+                        | Q(usuario__username__icontains=request.POST["username"])) \
+                        .exclude(usuario=request.user)
 
     else:
         form = SearchForm()
