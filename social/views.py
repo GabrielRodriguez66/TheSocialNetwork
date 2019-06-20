@@ -85,7 +85,7 @@ def register(request):
                                                                             'error_message': 'User already exists'})
             else:
                 return render(request, "social/register.html", context={'form': form,
-                                                                'error_message': 'Username or Password is incorrect.'})
+                                                                        'error_message': 'Username or Password is incorrect.'})
         else:
             return render(request, "social/register.html", context={'form': form})
     elif request.method == 'GET':
@@ -154,7 +154,7 @@ def timeline(request):
             #get all friends
             recipients = request.user.socialnetworkuser.friends.all()
             message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
-                                           pub_date=timezone.now())
+                                             pub_date=timezone.now())
             message.recipients.add(request.user.socialnetworkuser)
             for recipient in recipients:
                 message.recipients.add(recipient)
@@ -172,32 +172,35 @@ def home(request):
 
 
 @login_required
-def chat_manager(request, friend_pk, view):
-    form = ShoutForm(request.POST or None)
+def chat_manager(request, friend_pk, view=None, chat_pk=None):
+    form = ChatForm(request.POST or None) if chat_pk is not None else ShoutForm(request.POST or None)
     if form.is_valid():
         message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
                                          pub_date=timezone.now())
         recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
         message.recipients.add(request.user.socialnetworkuser)
         message.recipients.add(recipient)
-        return HttpResponseRedirect(reverse("social:"+view))
-
-
-@login_required
-def new_chat_view(request, friend_pk):
-    form = ChatForm(request.POST or None)
-    if form.is_valid():
-        new_chat = Chat.objects.create(creation_date=timezone.now())
-        message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
-                                         pub_date=timezone.now(), chat=new_chat)
-        recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
-        message.recipients.add(request.user.socialnetworkuser)
-        message.recipients.add(recipient)
-        return HttpResponseRedirect(reverse("social:friends"))
+        if chat_pk is not None:
+            chat = Chat.objects.create(creation_date=timezone.now()) if chat_pk == 0 else get_object_or_404(Chat,
+                                                                                                             pk=chat_pk)
+            message.chat = chat
+            message.save()
+            creation_date = chat.creation_date
+            messages = [message] if chat_pk == 0 else chat.message_set.order_by('-pub_date')
+            friend = message.recipients.first() if message.author == message.recipients.last() else message.recipients.\
+                last()
+            return render(request, 'social/chat.html',
+                          {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
+                           'chat_form': ChatForm()})
+    return HttpResponseRedirect(reverse("social:"+view))
 
 
 @login_required
 def open_chat_view(request, message_id):
-    chat = get_object_or_404(Message, pk=message_id).chat
+    message = get_object_or_404(Message, pk=message_id)
+    chat = message.chat
     messages = chat.message_set.order_by('-pub_date')
-    return render(request, 'social/timeline.html', {'chat_messages': messages,  'chat_form': ChatForm() })
+    creation_date = chat.creation_date
+    friend = message.recipients.first() if message.author == message.recipients.last() else message.recipients.last()
+    return render(request, 'social/chat.html', {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
+                                                'chat_form': ChatForm()})

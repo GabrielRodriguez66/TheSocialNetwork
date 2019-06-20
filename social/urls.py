@@ -4,9 +4,9 @@ from . import views
 
 app_name = 'social'
 urlpatterns = [
-    path("chat/<int:friend_pk>/<str:view>", views.chat_manager, name="chat"),
-    path("open_chat/<int:message_id>/", views.chat_manager, name="open_chat"),
-    path("new_chat/<int:friend_pk>/", views.new_chat_view, name="new_chat"),
+    path("chat/<int:friend_pk>/<str:view>/", views.chat_manager, name="chat"),
+    path("chat/<int:friend_pk>/<str:view>/<int:chat_pk>/", views.chat_manager, name="new_chat"),
+    path("open_chat/<int:message_id>/", views.open_chat_view, name="open_chat"),
     path("friends/", views.friends_view, name="friends"),
     path('timeline/', views.timeline, name='timeline'),
     path('search/', views.search, name="search"),
