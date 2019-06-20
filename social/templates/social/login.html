@@ -1,24 +1,12 @@
 {% extends "social/register.html" %}
-{% load static %}
-
 {% block title %}
-    <h2 class="center">Please log-in</h2>
+    <h2>Please log-in</h2>
 {% endblock %}
-
 {% block content %}
-    <div class="center">
-<div class="container">
     <form action="{% url "social:login_view" %}" method="POST">
     {% csrf_token %}
     {{ form }}
-         <div class="center">
-    <button class="cancelbtn" onclick="window.location.href = '{% url "social:register" %}'">Register</button>
-             <button type="submit">Log-In</button>
-        </div>
+        <input type="submit" value="Log-In">
     </form>
-    </div>
-        </div>
-    <div class="imgcontainer">
-    <img src="{% static "social/images/default.jpg" %}" class="avatar">
-    </div>
+    <b><i><u><a href="{% url 'social:register' %}">Not a user? Click here to register!</a></u></i></b>
 {% endblock %}

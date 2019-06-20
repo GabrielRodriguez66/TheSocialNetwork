@@ -1,4 +1,3 @@
-import base64
 import json
 
 import django
@@ -16,9 +15,9 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm, LoginForm, ProfileHandle, ProfilePic
+from social.forms import RegisterForm, LoginForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message, FriendRequested, UploadedPic, REQUEST_STATUS_CHOICES, PENDING_STATUS, ACCEPTED_STATUS, REJECTED_STATUS, IGNORED_STATUS, CANCELED_STATUS
+from .models import SocialNetworkUser, Message, FriendRequested, REQUEST_STATUS_CHOICES, PENDING_STATUS, ACCEPTED_STATUS, REJECTED_STATUS, IGNORED_STATUS, CANCELED_STATUS
 
 
 @never_cache
@@ -105,16 +104,15 @@ def unfriend(request, friend_pk, view):
 def search(request):
     users = SocialNetworkUser.objects.exclude(usuario=request.user)
     auth = request.user.socialnetworkuser
-
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            u_name = form.cleaned_data["username"]
-            if u_name != '':
-                users = SocialNetworkUser.objects.annotate(similarity=TrigramSimilarity('usuario__username', u_name),).filter(similarity__gt=0.3).order_by('-similarity')
-                # users = SocialNetworkUser.objects.filter(usuario__username__iexact=request.POST["username"])
-                # if not users:
-                # users = SocialNetworkUser.objects.filter(Q(usuario__username__icontains=u_name)).exclude(usuario=request.user)
+            clean_auth_name = form.cleaned_data["username"]
+            if request.POST["username"] != '':
+                users = SocialNetworkUser.objects.annotate(
+                    similarity=TrigramSimilarity('usuario__username', clean_auth_name)).filter(
+                    Q(usuario__username__icontains=clean_auth_name) | Q(similarity__gt=0.3)).order_by('-similarity')\
+                    .exclude(usuario=request.user)
     else:
         form = SearchForm()
     context = {
@@ -123,7 +121,6 @@ def search(request):
         'chat': ShoutForm(),
         'auth_user': auth
     }
-
     return render(request, 'social/search.html', context)
 
 
@@ -188,7 +185,6 @@ def timeline(request):
                                                     'friend_requests': friend_requests, })
 
 
-@login_required
 def home(request):
     return HttpResponseRedirect(reverse("social:timeline"))
 
@@ -203,70 +199,3 @@ def chat_manager(request, friend_pk, view):
         message.recipients.add(request.user.socialnetworkuser)
         message.recipients.add(recipient)
         return HttpResponseRedirect(reverse("social:"+view))
-
-
-@login_required
-def profile(request):
-    if request.user.socialnetworkuser.has_pic:
-        data = UploadedPic.objects.get(user=request.user.socialnetworkuser)
-        pic_data = str(bytes(data.pic)).split("'")[1]
-        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
-    else:
-        pic = "/static/social/images/default.jpg"
-    if request.method == "POST":
-        for user in SocialNetworkUser.objects.all():
-            if user.handle == request.POST["handle"]:
-                return render(request, 'social/profile.html',
-                              {"error_message": "Handle is taken", "handle_form": ProfileHandle(),
-                               "pic_url": pic, "pic_form": ProfilePic()})
-        request.user.socialnetworkuser.handle = request.POST['handle']
-        request.user.socialnetworkuser.save()
-        return render(request, 'social/profile.html', {"handle_form": ProfileHandle(),
-                                                       "pic_url": pic, "pic_form": ProfilePic()})
-    else:
-        return render(request, 'social/profile.html', {"handle_form": ProfileHandle(),
-                                                       "pic_url": pic,
-                                                       "pic_form": ProfilePic()})
-
-
-@login_required
-def profile_pic(request):
-    pic = request.FILES["pic"]
-    upload(request, pic)
-    request.user.socialnetworkuser.has_pic = True
-    request.user.socialnetworkuser.save()
-    return HttpResponseRedirect(reverse("social:profile"))
-
-
-def upload(request, obj):
-    exists = UploadedPic.objects.filter(user=request.user.socialnetworkuser).count()
-    try:
-        if exists == 0:
-            pdf = UploadedPic()
-            file = obj
-            file_data = file.read()
-            pdf.pic = base64.b64encode(file_data)
-            pdf.tipo_mime = "image/jpeg"
-            pdf.user = request.user.socialnetworkuser
-            pdf.save()
-            obj.archivo = pdf
-        else:
-            pdf = UploadedPic.objects.get(user=request.user.socialnetworkuser)
-            file_data = obj.read()
-            pdf.pic = base64.b64encode(file_data)
-            pdf.save()
-            obj.archivo = pdf
-    except KeyError:
-        pass
-
-
-def delete_pic(request):
-    user = request.user.socialnetworkuser
-    if user.has_pic:
-        UploadedPic.objects.get(user=user).delete()
-        user.has_pic = False
-        user.save()
-        return HttpResponseRedirect(reverse("social:profile"))
-    else:
-        return HttpResponseRedirect(reverse("social:profile"))
-
