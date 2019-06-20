@@ -187,8 +187,7 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
             message.save()
             creation_date = chat.creation_date
             messages = [message] if chat_pk == 0 else chat.message_set.order_by('-pub_date')
-            friend = message.recipients.first() if message.author == message.recipients.last() else message.recipients.\
-                last()
+            friend = message.recipients.first()
             return render(request, 'social/chat.html',
                           {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
                            'chat_form': ChatForm()})
@@ -201,6 +200,6 @@ def open_chat_view(request, message_id):
     chat = message.chat
     messages = chat.message_set.order_by('-pub_date')
     creation_date = chat.creation_date
-    friend = message.recipients.first() if message.author == message.recipients.last() else message.recipients.last()
+    friend = message.recipients.first()
     return render(request, 'social/chat.html', {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
                                                 'chat_form': ChatForm()})

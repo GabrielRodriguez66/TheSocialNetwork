@@ -35,11 +35,11 @@
             <li> <div class="card" style="width: 30rem;">
                 <div class="card-body">
 
-                    {% if m.author == m.recipients.last %}
+{#                    {% if m.author == m.recipients.last %}#}
                         <h5 class="card-title">{{ m.author.usuario.first_name }} -> {{ m.recipients.first.usuario.first_name }}</h5>
-                    {% else %}
-                        <h5 class="card-title">{{ m.author.usuario.first_name }} -> {{ m.recipients.last.usuario.first_name }}</h5>
-                    {% endif %}
+{#                    {% else %}#}
+{#                        <h5 class="card-title">{{ m.author.usuario.first_name }} -> {{ m.recipients.last.usuario.first_name }}</h5>#}
+{#                    {% endif %}#}
 
                     <div><p>{{ m.text }}</p></div>
                     <div style="float:right" ><p> <strong> posted </strong> {{ m.pub_date }}</p></div>
