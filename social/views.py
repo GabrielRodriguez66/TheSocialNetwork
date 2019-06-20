@@ -138,11 +138,13 @@ def respond_request(request, request_pk, accepted):
         message = Message.objects.create(text=status_choices.get(ACCEPTED_STATUS), author=dest,
                                          pub_date=timezone.now())
         message.recipients.add(rem)
+        message.recipients.add(dest)
     elif accepted == REJECTED_STATUS:
         req.status = REJECTED_STATUS
         message = Message.objects.create(text=status_choices.get(REJECTED_STATUS), author=dest,
                                          pub_date=timezone.now())
         message.recipients.add(rem)
+        message.recipients.add(dest)
     elif accepted == IGNORED_STATUS:
         req.status = IGNORED_STATUS
     elif accepted == CANCELED_STATUS:
