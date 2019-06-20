@@ -25,20 +25,21 @@
     <ul>
         {% for socialnet_user, is_friend in users %}
             <li>
-                {{ socialnet_user.usuario.username }} - {{ is_friend }}
+                {{ socialnet_user.usuario.username }}
                 {% if is_friend %}
-                     <!-- Button trigger modal -->
-                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat">
+
+                    <!-- Button trigger modal -->
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal{{ forloop.counter }}">
                         Chat
                     </button>
 
                     <!-- Modal -->
-                    <div class="modal fade" id="Modal-Chat" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable" role="document">
+                    <div class="modal fade" id="Modal{{ forloop.counter }}" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
 
-                                    <h5 class="modal-title" id="ModalScrollableTitle"> Chat </h5>
+                                    <h5 class="modal-title" id="ModalScrollableTitle"> Start Chat </h5>
 
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
@@ -46,21 +47,23 @@
 
                                 </div>
 
-                                <form action="{% url 'social:chat' socialnet_user.id "search"%}" method="POST">
+                                <form action="{% url "social:new_chat" socialnet_user.id "none" 0%}" method="POST">
                                     {% csrf_token %}
+
                                     <div class="modal-body">
                                         {{ chat }}
                                     </div>
 
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <input type="submit" class="btn btn-primary" name="chat" value="Send">
+                                        <input type="submit" class="btn btn-primary" value="Send">
                                     </div>
                                 </form>
 
                             </div>
                         </div>
                     </div>
+
                     <a href="{% url "social:unfriend" socialnet_user.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
 
                 {% else %}

@@ -118,7 +118,7 @@ def search(request):
     context = {
         'users': [(user, auth in user.friends.all()) for user in users],
         'form': form,
-        'chat': ShoutForm(),
+        'chat': ChatForm(),
         'auth_user': auth
     }
     return render(request, 'social/search.html', context)
