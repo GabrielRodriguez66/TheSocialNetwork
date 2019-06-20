@@ -13,4 +13,7 @@ urlpatterns = [
     path(r'asocia_usuario/', views.asocia_usuario, name='asocia_usuario'),
     path("login/", views.login_view, name="login_view"),
     path("logout/", views.logout_view, name="logout_view"),
+    path("profile/", views.profile, name="profile"),
+    path("profile/picture", views.profile_pic, name="profile_pic"),
+    path("profile/delete", views.delete_pic, name="delete_pic"),
 ]
