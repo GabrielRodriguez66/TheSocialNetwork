@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
@@ -108,7 +109,10 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(usuario__username__contains=request.POST["username"])
+
+                users = SocialNetworkUser.objects.filter(Q(usuario__username__icontains=request.POST["username"]) or
+                                                         Q(usuario__username__trigram_similar=request.POST["username"]))
+
     else:
         form = SearchForm()
     context = {
