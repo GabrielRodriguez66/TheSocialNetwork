@@ -13,9 +13,9 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm, LoginForm
+from social.forms import RegisterForm, LoginForm, ChatForm
 from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message, FriendRequested
+from .models import SocialNetworkUser, Message, FriendRequested, Chat
 
 
 @never_cache
@@ -36,10 +36,11 @@ def asocia_usuario(request):
 
 
 @login_required
-def friends_view(request, friend_pk=None, view=None):
-    form = ShoutForm()
+def friends_view(request):
+    form = ChatForm()
     friends = request.user.socialnetworkuser.friends.all()
-    return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form, })
+    return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form, 'shouts':
+        Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date') })
 
 
 def logout_view(request):
@@ -158,7 +159,8 @@ def timeline(request):
         form = ShoutForm()
     messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
-    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form, 'friend_requests': friend_requests,})
+    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,
+                                                    'friend_requests': friend_requests, 'chat_form': ChatForm()})
 
 
 def home(request):
@@ -175,3 +177,23 @@ def chat_manager(request, friend_pk, view):
         message.recipients.add(request.user.socialnetworkuser)
         message.recipients.add(recipient)
         return HttpResponseRedirect(reverse("social:"+view))
+
+
+@login_required
+def new_chat_view(request, friend_pk):
+    form = ChatForm(request.POST or None)
+    if form.is_valid():
+        new_chat = Chat.objects.create(creation_date=timezone.now())
+        message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
+                                         pub_date=timezone.now(), chat=new_chat)
+        recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
+        message.recipients.add(request.user.socialnetworkuser)
+        message.recipients.add(recipient)
+        return HttpResponseRedirect(reverse("social:friends"))
+
+
+@login_required
+def open_chat_view(request, message_id):
+    chat = get_object_or_404(Message, pk=message_id).chat
+    messages = chat.message_set.order_by('-pub_date')
+    return render(request, 'social/timeline.html', {'chat_messages': messages,  'chat_form': ChatForm() })

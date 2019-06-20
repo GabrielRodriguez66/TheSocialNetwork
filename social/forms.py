@@ -8,6 +8,10 @@ class ShoutForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Shout', max_length=240, required=True)
 
 
+class ChatForm(forms.Form):
+    text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Message Text', max_length=240, required=True)
+
+
 class SearchForm(forms.Form):
     username = forms.CharField(label='Search', max_length=20, required=False)
 
