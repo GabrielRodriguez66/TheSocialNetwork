@@ -1,15 +1,26 @@
 from django import forms
 from django.core.exceptions import ValidationError
+from django.forms import MultiWidget
 
 from social.widgets import BuscadorDeUsuarioField
 
 
-class ShoutForm(forms.Form):
-    text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Shout', max_length=240, required=True)
+FILTER_CHOICES = [('1', 'Name'),
+                  ('2', 'Sent today'),
+                  ('3', 'Shouts only'),
+                  ('4', 'No filter')]
 
+class ShoutForm(forms.Form):
+    text = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}), label='Shout', max_length=240, required=True)
+
+class TimelineFilter(forms.Form):
+    choice_field = forms.ChoiceField(widget=forms.RadioSelect, choices=FILTER_CHOICES)
 
 class SearchForm(forms.Form):
     username = forms.CharField(label='Search', max_length=20, required=False)
+
+class ReceiverForm(forms.Form):
+    user = forms.CharField(label='Search', max_length=20, required=False)
 
 
 class RegisterForm(forms.Form):

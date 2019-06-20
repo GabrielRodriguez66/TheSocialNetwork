@@ -18,11 +18,16 @@ class SocialNetworkUser(models.Model):
         return self.usuario.username
 
 
+class Chat(models.Model):
+    creation_date = models.DateTimeField('date created')
+
+
 class Message(models.Model):
     text = models.TextField()
     pub_date = models.DateTimeField('date published', default=datetime.now())
     author = models.ForeignKey(SocialNetworkUser, on_delete=models.CASCADE)
     recipients = models.ManyToManyField(SocialNetworkUser, related_name="friend_list", blank=True)
+    chat = models.ForeignKey(Chat, on_delete=models.SET_NULL, null=True)
 
 
 

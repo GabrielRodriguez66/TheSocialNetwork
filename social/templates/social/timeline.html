@@ -38,8 +38,25 @@
                 {% endif %}
             </div>
         </div>
-    </div> <br> <br>
-    <form action="" method="post">
+    </div> <br> <br> <br> <br>
+
+    <h4>&nbsp Filter messages: </h4>
+    <form action={% url "social:timeline" %} style="margin-left: 20px" method="POST">
+        {% csrf_token %}
+        <input type="radio" name="filter" value=1>Sender   &nbsp &nbsp &nbsp{{ senderform }}​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​ <br>
+        <input type="radio" name="filter" value=2>Receiver &nbsp &nbsp{{ receiverform }}​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​ <br>
+        <input type="radio" name="filter" value=3>Sent today<br>
+        <input type="radio" name="filter" value=4>Shouts only<br>
+        <input type="radio" name="filter" value=5>No filter<br>
+
+        <button class="btn btn-info btn-sm" id="applyfilter" name="search" type="submit">Apply Filter</button>
+    </form>
+    <br>
+    <br>
+    <br>
+
+
+    <form action="" style="margin-left: 20px" method="post">
         {% csrf_token %}
         {{ forms }}
         <input class="btn btn-info btn-sm" id="submitButton" type="submit" value="Submit">
@@ -48,10 +65,10 @@
     {%  if shouts %}
         <ul>
             {%  for shout in shouts %}
-                {% if shout.recipients.count == 2 %}
+                {% if shout.recipients.count == 1 and shout.chat != None %}
                     <li> <div class="card" style="width: 30rem;">
                         <div class="card-body">
-                            <h5 class="card-title">{{ shout.author.usuario.first_name }} -> {{ shout.recipients.last.usuario.first_name }}</h5>
+                            <h5 class="card-title">{{ shout.author.usuario.first_name }} -> {{ shout.recipients.first.usuario.first_name }}</h5>
                             <div><p>{{ shout.text }}</p></div>
                             <div style="float:right" ><p> <strong> posted </strong> {{ shout.pub_date }}</p></div>
                         </div>
