@@ -5,7 +5,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
@@ -14,8 +13,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm, LoginForm, ChatForm
-from .forms import SearchForm, ShoutForm
+from social.forms import RegisterForm, LoginForm, ChatForm, SearchForm, ShoutForm, ReceiverForm
 from .models import SocialNetworkUser, Message, FriendRequested, Chat
 
 
@@ -148,23 +146,43 @@ def search_view_unfriend(request, friend_pk):
 
 @login_required
 def timeline(request):
+    messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
+        recipients=request.user.socialnetworkuser)).order_by('-pub_date')
+    senderform = SearchForm(request.POST)
+    receiverform = ReceiverForm(request.POST)
     if request.method == 'POST':
         form = ShoutForm(request.POST or None)
         if form.is_valid():
-            #get all friends
             recipients = request.user.socialnetworkuser.friends.all()
             message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
                                              pub_date=timezone.now())
-            message.recipients.add(request.user.socialnetworkuser)
             for recipient in recipients:
                 message.recipients.add(recipient)
-            return HttpResponseRedirect(reverse("social:timeline"))
+                return HttpResponseRedirect(reverse("social:timeline"))
+        if request.POST['filter'] == '1':
+            if senderform.is_valid():
+                if request.POST["username"] != '':
+                    messages = Message.objects.filter(author__usuario__username__contains=request.POST["username"]).order_by('-pub_date')
+        if request.POST['filter'] == '2':
+            if receiverform.is_valid():
+                if request.POST["username"] != '':
+                    messages = Message.objects.filter(recipients=request.POST["username"]).order_by('-pub_date')
+        if request.POST['filter'] == '3':
+            messages = Message.objects.filter(pub_date__day=timezone.now().day).order_by('-pub_date')
+        if request.POST['filter'] == '4':
+            messages = Message.objects.filter(pub_date__day=timezone.now().day).order_by('-pub_date')
+        if request.POST['filter'] == '5':
+            messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
+                recipients=request.user.socialnetworkuser)).order_by('-pub_date')
     else:
         form = ShoutForm()
-    messages = Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date')
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
-    return render(request, 'social/timeline.html', {'shouts': messages, 'forms': form,
-                                                    'friend_requests': friend_requests, 'chat_form': ChatForm()})
+    return render(request, 'social/timeline.html', {'shouts': messages,
+                                                    'forms': form,
+                                                    'friend_requests': friend_requests,
+                                                    'senderform': senderform,
+                                                    'receiverform': receiverform,
+                                                    })
 
 
 def home(request):
@@ -176,9 +194,8 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
     form = ChatForm(request.POST or None) if chat_pk is not None else ShoutForm(request.POST or None)
     if form.is_valid():
         message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
-                                         pub_date=timezone.now())
+                                               pub_date=timezone.now())
         recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
-        message.recipients.add(request.user.socialnetworkuser)
         message.recipients.add(recipient)
         if chat_pk is not None:
             chat = Chat.objects.create(creation_date=timezone.now()) if chat_pk == 0 else get_object_or_404(Chat,

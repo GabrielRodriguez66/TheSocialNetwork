@@ -18,6 +18,10 @@ class SearchForm(forms.Form):
     username = forms.CharField(label='Search', max_length=20, required=False)
 
 
+class ReceiverForm(forms.Form):
+    user = forms.CharField(label='Search', max_length=20, required=False)
+
+
 class RegisterForm(forms.Form):
     template = "social/register.html"
     buscador_de_usuario = BuscadorDeUsuarioField(url="/social/asocia_usuario/",
