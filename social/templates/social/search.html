@@ -23,12 +23,12 @@
     <form action="" method="POST">
         {% csrf_token %}
         {{ form }}
-        <button class="btn btn-primary btn-sm" name="search" type="submit">search</button>
+        <button class="btn btn-info btn-sm" name="search" type="submit">search</button>
     </form>
     <ul>
-        {% for user, is_friend in users %}
+        {% for user, is_friend, f_request in users %}
             <li>
-                {{ user.usuario.username }} - {{ is_friend }}
+                {{ user.usuario.username }}
                 {% if is_friend %}
                      <!-- Button trigger modal -->
                     <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat">
@@ -65,7 +65,8 @@
                         </div>
                     </div>
                     <a href="{% url "social:unfriend" user.usuario.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
-
+                {% elif f_request %}
+                    <a href="{% url "social:respond_request" f_request.pk 5 %}" class="btn btn-danger btn-sm">Cancel Request</a>
                 {% else %}
                     <a href="{% url "social:friend_request" user.usuario.id %}" class="btn btn-success btn-sm">Add Friend</a>
                 {% endif %}
