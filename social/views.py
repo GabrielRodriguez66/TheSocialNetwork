@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
@@ -119,7 +119,7 @@ def search(request):
             if clean_search_name != '':
                 users = SocialNetworkUser.objects.annotate(
                     similarity=TrigramSimilarity('usuario__username', clean_search_name)).filter(
-                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
+                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity') \
                     .exclude(usuario=request.user)
     else:
         form = SearchForm()
@@ -197,15 +197,15 @@ def timeline(request):
                     displayedMessages = Recibido.objects.filter(user_id__usuario__username__icontains=user).order_by('-message_id__pub_date')
         if request.POST['filter'] == '3':
             displayedMessages = Recibido.objects.filter((Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser)),
+                                                         Q(message_id__author=request.user.socialnetworkuser)),
                                                         message_id__pub_date__day=timezone.now().day).order_by('-message_id__pub_date')
 
         if request.POST['filter'] == '4':
             displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser), message_id__chat_id=None).order_by('-message_id__pub_date')
+                                                        Q(message_id__author=request.user.socialnetworkuser), message_id__chat_id=None).order_by('-message_id__pub_date')
         if request.POST['filter'] == '5':
             displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
+                                                        Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
     else:
         form = ShoutForm()
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser, status=PENDING_STATUS)
@@ -238,10 +238,12 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
             message.save()
             creation_date = chat.creation_date
             messages = [message] if chat_pk == 0 else chat.message_set.order_by('-pub_date')
-            friend = message.recipients.first()
-            return render(request, 'social/chat.html',
-                          {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
-                           'chat_form': ChatForm()})
+            recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+                values_list('message_id__text', 'message_id__author__usuario__first_name',
+                            'user_id__usuario__first_name',
+                            'message_id__pub_date')
+            return render(request, 'social/chat.html', {"chat_id": chat.id, "date": creation_date,
+                                                       "recibido_messages": recibido_messages, 'chat_form': ChatForm()})
     return HttpResponseRedirect(reverse("social:"+view))
 
 
@@ -251,8 +253,11 @@ def open_chat_view(request, message_id):
     chat = message.chat
     messages = chat.message_set.order_by('-pub_date')
     creation_date = chat.creation_date
-    friend = message.recipients.first()
-    return render(request, 'social/chat.html', {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
+    recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+        values_list('message_id__text', 'message_id__author__usuario__first_name',
+                    'user_id__usuario__first_name',
+                    'message_id__pub_date')
+    return render(request, 'social/chat.html', {"chat_id": chat.id, "recibido_messages": recibido_messages, "date": creation_date,
                                                 'chat_form': ChatForm()})
 
 
