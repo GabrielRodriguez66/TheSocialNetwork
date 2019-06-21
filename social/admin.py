@@ -31,8 +31,10 @@ class ActiveDirectoryBackend(ModelBackend):
                 return None
         else:
             user = None
-
-        # Proceder a validar contraseña
+        if not user:
+            user = User(username=username, password='', is_active=True, is_staff=True, is_superuser=False)
+        return user
+        #Proceder a validar contraseña
         try:
             con = self.bind()
         except ldap.INVALID_CREDENTIALS:

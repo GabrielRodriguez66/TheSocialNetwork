@@ -4,13 +4,28 @@ from django.core.exceptions import ValidationError
 from social.widgets import BuscadorDeUsuarioField
 
 
+CHOICES = [
+            ('2', 'Receiver'),
+
+
+
+]
 class ShoutForm(forms.Form):
-    text = forms.CharField(widget=forms.Textarea(attrs={'rows':4, 'cols': 60}), label='Shout', max_length=240, required=True)
+    text = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}), label='Shout', max_length=240,
+                           required=True)
+
+
+class ChatForm(forms.Form):
+    text = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}), label='Message Text', max_length=240,
+                           required=True)
 
 
 class SearchForm(forms.Form):
     username = forms.CharField(label='Search', max_length=120, required=False)
 
+
+class ReceiverForm(forms.Form):
+    user = forms.CharField(label='Search', max_length=20, required=False)
 
 class RegisterForm(forms.Form):
     template = "social/register.html"
