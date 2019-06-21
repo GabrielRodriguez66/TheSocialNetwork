@@ -24,11 +24,19 @@ button {
   border: none;
   cursor: pointer;
   width: 100%;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
 }
 
 /* Add a hover effect for buttons */
 button:hover {
   opacity: 0.8;
+}
+
+button:active {
+  background-color: #40c0d0;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
 }
 
 /* Extra style for the cancel button (red) */
@@ -39,6 +47,12 @@ button:hover {
   margin: 8px 0;
   border: none;
   cursor: pointer;
+}
+
+.cancelbtn:active {
+  background-color: #d44336;
+  box-shadow: 0 5px #666;
+  transform: translateY(4px);
 }
 
 /* Center the avatar image inside this container */

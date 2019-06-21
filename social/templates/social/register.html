@@ -7,8 +7,7 @@
 {% block title %}
 <h2 class="center">Please register</h2>
 {%  endblock %}
-
-    {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
+<div class="center">{% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}</div>
 {%  block content %}
     <div class="center">
     <div class="container">
