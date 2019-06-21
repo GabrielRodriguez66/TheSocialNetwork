@@ -15,7 +15,7 @@ class ChatForm(forms.Form):
 
 
 class SearchForm(forms.Form):
-    username = forms.CharField(label='Search', max_length=20, required=False)
+    username = forms.CharField(label='Search', max_length=120, required=False)
 
 
 class ReceiverForm(forms.Form):
@@ -57,3 +57,13 @@ class LoginForm(forms.Form):
         else:
             self.cleaned_data['password'] = self.data['password']
         return password
+
+
+class ProfileHandle(forms.Form):
+    template = "social/profile.html"
+    handle = forms.CharField(strip=True, max_length=10)
+
+
+class ProfilePic(forms.Form):
+    template = "social/profile.html"
+    pic = forms.ImageField(label="")
