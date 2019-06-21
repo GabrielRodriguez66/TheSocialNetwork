@@ -11,10 +11,10 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends<span class="sr-only">(current)</span></a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
+        <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navLogout" href="{% url "social:profile" %}">Profile</a>
+        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
     </li>
 {% endblock%}
 
@@ -27,17 +27,17 @@
                     {{ friend.usuario.username }}
 
                     <!-- Button trigger modal -->
-                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat">
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal{{ forloop.counter }}">
                         Chat
                     </button>
 
                     <!-- Modal -->
-                    <div class="modal fade" id="Modal-Chat" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable" role="document">
+                    <div class="modal fade" id="Modal{{ forloop.counter }}" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
 
-                                    <h5 class="modal-title" id="ModalScrollableTitle"> Chat </h5>
+                                    <h5 class="modal-title" id="ModalScrollableTitle"> Start Chat </h5>
 
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
@@ -45,8 +45,9 @@
 
                                 </div>
 
-                                <form action="{% url 'social:chat' friend.id "friends"%}" method="POST">
+                                <form action="{% url "social:new_chat" friend.id "none" 0%}" method="POST">
                                     {% csrf_token %}
+
                                     <div class="modal-body">
                                         {{ form }}
                                     </div>

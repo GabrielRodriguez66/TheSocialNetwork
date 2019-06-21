@@ -11,10 +11,10 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
+        <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navLogout" href="{% url "social:profile" %}">Profile</a>
+        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
     </li>
 {% endblock%}
 
@@ -30,18 +30,19 @@
             <li>
                 {{ user.usuario.username }}
                 {% if is_friend %}
-                     <!-- Button trigger modal -->
-                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat">
+
+                    <!-- Button trigger modal -->
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal{{ forloop.counter }}">
                         Chat
                     </button>
 
                     <!-- Modal -->
-                    <div class="modal fade" id="Modal-Chat" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
-                        <div class="modal-dialog modal-dialog-scrollable" role="document">
+                    <div class="modal fade" id="Modal{{ forloop.counter }}" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
 
-                                    <h5 class="modal-title" id="ModalScrollableTitle"> Chat </h5>
+                                    <h5 class="modal-title" id="ModalScrollableTitle"> Start Chat </h5>
 
                                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                                         <span aria-hidden="true">&times;</span>
@@ -49,7 +50,7 @@
 
                                 </div>
 
-                                <form action="{% url 'social:chat' user.id "search"%}" method="POST">
+                                <form action="{% url "social:new_chat" user.id "none" 0%}" method="POST">
                                     {% csrf_token %}
                                     <div class="modal-body">
                                         {{ chat }}
@@ -57,18 +58,18 @@
 
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                        <input type="submit" class="btn btn-primary" name="chat" value="Send">
+                                        <input type="submit" class="btn btn-primary" value="Send">
                                     </div>
                                 </form>
 
                             </div>
                         </div>
                     </div>
-                    <a href="{% url "social:unfriend" user.usuario.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
+                    <a href="{% url "social:unfriend" user.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
                 {% elif f_request %}
                     <a href="{% url "social:respond_request" f_request.pk 5 %}" class="btn btn-danger btn-sm">Cancel Request</a>
                 {% else %}
-                    <a href="{% url "social:friend_request" user.usuario.id %}" class="btn btn-success btn-sm">Add Friend</a>
+                    <a href="{% url "social:friend_request" user.id %}" class="btn btn-success btn-sm">Add Friend</a>
                 {% endif %}
 
             </li><br>

@@ -1,6 +1,8 @@
 {% load static %}
 
-<link rel="stylesheet" type="text/css" href="{% static 'social/profile.css' %}">
+<html>
+<header>
+    <link rel="stylesheet" type="text/css" href="{% static 'polls/css/style.css' %}">
 
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
@@ -15,7 +17,12 @@
         crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-        crossorigin="anonymous"></script>
+        crossorigin="anonymous">
+
+</script>
+
+</header>
+<body onload="//setTimeout(function(){location.reload();}, 9000);">
 
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-dark bg-info">
@@ -33,11 +40,11 @@
                 <li class="nav-item">
                     <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
                 </li>
+                 <li class="nav-item">
+                    <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
-                </li>
-                 <li class="nav-item">
-                    <a class="nav-link" id="navLogout" href="{% url "social:profile" %}">Profile</a>
                 </li>
             {% endblock%}
 
@@ -47,3 +54,5 @@
 
 {% block content %}
 {% endblock%}
+</body>
+</html>
