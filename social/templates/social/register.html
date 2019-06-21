@@ -1,18 +1,28 @@
+{% load static %}
 
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
-      integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-<h1><font color="#40e0d0">Welcome to Rama Judicial Social Network</font></h1>
+<link rel="stylesheet" type="text/css" href="{% static 'social/login.css' %}">
+<h1 class="center"><font color="#40e0d0">Welcome to Rama Judicial Social Network</font></h1>
+<script src="{% static 'social/login.js' %}"></script>
 
 {% block title %}
-<h2>Please register</h2>
+<h2 class="center">Please register</h2>
 {%  endblock %}
-
-    {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
+<div class="center">{% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}</div>
 {%  block content %}
+    <div class="center">
+    <div class="container">
     <form action="{% url "social:register" %}" method="POST">
         {% csrf_token %}
         {{ form }}
-        <input type="submit" value="Register">
+          <input type="checkbox" onclick="showPass()">Mostrar contraseña
+         <div class="center">
+        <button type="submit">Register</button>
+             <button class="cancelbtn" onclick="window.location.href = '{% url "social:login_view" %}'">Log-In</button>
+         </div>
     </form>
-    <b><i><u><a href="{% url 'social:login_view' %}">Already a user? Click here to log-in!</a></u></i></b>
+        </div>
+        </div>
+     <div class="imgcontainer">
+    <img src="{% static "social/images/default.jpg" %}" class="avatar">
+    </div>
 {%  endblock %}

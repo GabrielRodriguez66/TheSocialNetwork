@@ -1,3 +1,4 @@
+import base64
 import json
 
 import django
@@ -14,9 +15,11 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm, LoginForm, ReceiverForm
-from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Recibido, Message, FriendRequested
+from social.forms import ProfileHandle, ProfilePic
+from social.forms import RegisterForm, LoginForm, ChatForm, SearchForm, ShoutForm, ReceiverForm
+from .models import Recibido
+from .models import SocialNetworkUser, Message, FriendRequested, Chat
+from .models import UploadedPic
 
 
 @never_cache
@@ -38,7 +41,7 @@ def asocia_usuario(request):
 
 @login_required
 def friends_view(request):
-    form = ShoutForm()
+    form = ChatForm()
     friends = request.user.socialnetworkuser.friends.all()
     return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form, })
 
@@ -108,13 +111,19 @@ def search(request):
         form = SearchForm(request.POST)
         if form.is_valid():
             if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(usuario__username__contains=request.POST["username"])
+                users = SocialNetworkUser.objects.filter(usuario__username__iexact=request.POST["username"])
+                if not users.first():
+                    users = SocialNetworkUser.objects.filter(
+                        Q(usuario__username__trigram_similar=request.POST["username"])
+                        | Q(usuario__username__icontains=request.POST["username"])) \
+                        .exclude(usuario=request.user)
+
     else:
         form = SearchForm()
     context = {
         'users': [(user, auth in user.friends.all()) for user in users],
         'form': form,
-        'chat': ShoutForm(),
+        'chat': ChatForm(),
         'auth_user': auth
     }
     return render(request, 'social/search.html', context)
@@ -188,17 +197,106 @@ def timeline(request):
                                                     })
 
 
+@login_required
 def home(request):
     return HttpResponseRedirect(reverse("social:timeline"))
 
 
 @login_required
-def chat_manager(request, friend_pk, view):
-    form = ShoutForm(request.POST or None)
+def chat_manager(request, friend_pk, view=None, chat_pk=None):
+    form = ChatForm(request.POST or None) if chat_pk is not None else ShoutForm(request.POST or None)
     if form.is_valid():
         message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
-                                               pub_date=timezone.now())
+                                         pub_date=timezone.now())
         recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
-        # message.recipients.add(request.user.socialnetworkuser)
         Recibido.objects.create(message_id=message, user_id=recipient)
-        return HttpResponseRedirect(reverse("social:"+view))
+        if chat_pk is not None:
+            chat = Chat.objects.create(creation_date=timezone.now()) if chat_pk == 0 else get_object_or_404(Chat,
+                                                                                                            pk=chat_pk)
+            message.chat = chat
+            message.save()
+            creation_date = chat.creation_date
+            messages = [message] if chat_pk == 0 else chat.message_set.order_by('-pub_date')
+            friend = message.recipients.first()
+            return render(request, 'social/chat.html',
+                          {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
+                           'chat_form': ChatForm()})
+    return HttpResponseRedirect(reverse("social:"+view))
+
+
+@login_required
+def open_chat_view(request, message_id):
+    message = get_object_or_404(Message, pk=message_id)
+    chat = message.chat
+    messages = chat.message_set.order_by('-pub_date')
+    creation_date = chat.creation_date
+    friend = message.recipients.first()
+    return render(request, 'social/chat.html', {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
+                                                'chat_form': ChatForm()})
+
+
+@login_required
+def profile(request):
+    if request.user.socialnetworkuser.has_pic:
+        data = UploadedPic.objects.get(user=request.user.socialnetworkuser)
+        pic_data = str(bytes(data.pic)).split("'")[1]
+        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
+    else:
+        pic = "/static/social/images/default.jpg"
+    if request.method == "POST":
+        for user in SocialNetworkUser.objects.all():
+            if user.handle == request.POST["handle"]:
+                return render(request, 'social/profile.html',
+                              {"error_message": "Handle is taken", "handle_form": ProfileHandle(),
+                               "pic_url": pic, "pic_form": ProfilePic()})
+        request.user.socialnetworkuser.handle = request.POST['handle']
+        request.user.socialnetworkuser.save()
+        return render(request, 'social/profile.html', {"handle_form": ProfileHandle(),
+                                                       "pic_url": pic, "pic_form": ProfilePic()})
+    else:
+        return render(request, 'social/profile.html', {"handle_form": ProfileHandle(),
+                                                       "pic_url": pic,
+                                                       "pic_form": ProfilePic()})
+
+
+@login_required
+def profile_pic(request):
+    pic = request.FILES["pic"]
+    upload(request, pic)
+    request.user.socialnetworkuser.has_pic = True
+    request.user.socialnetworkuser.save()
+    return HttpResponseRedirect(reverse("social:profile"))
+
+
+def upload(request, obj):
+    exists = UploadedPic.objects.filter(user=request.user.socialnetworkuser).count()
+    try:
+        if exists == 0:
+            pdf = UploadedPic()
+            file = obj
+            file_data = file.read()
+            pdf.pic = base64.b64encode(file_data)
+            pdf.tipo_mime = "image/jpeg"
+            pdf.user = request.user.socialnetworkuser
+            pdf.save()
+            obj.archivo = pdf
+        else:
+            pdf = UploadedPic.objects.get(user=request.user.socialnetworkuser)
+            file_data = obj.read()
+            pdf.pic = base64.b64encode(file_data)
+            pdf.save()
+            obj.archivo = pdf
+    except KeyError:
+        pass
+
+
+def delete_pic(request):
+    user = request.user.socialnetworkuser
+    if user.has_pic:
+        UploadedPic.objects.get(user=user).delete()
+        user.has_pic = False
+        user.save()
+        return HttpResponseRedirect(reverse("social:profile"))
+    else:
+        return HttpResponseRedirect(reverse("social:profile"))
+

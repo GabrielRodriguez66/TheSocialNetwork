@@ -13,6 +13,8 @@ class SocialNetworkUser(models.Model):
     usuario = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     friends = models.ManyToManyField("self")
     requesting = models.ManyToManyField(FriendRequested)
+    handle = models.CharField(max_length=10, default="")
+    has_pic = models.BooleanField(default=False)
 
     def __str__(self):
         return self.usuario.username
@@ -31,6 +33,17 @@ class Message(models.Model):
 
     def __str__(self):
         return self.text
+
+
+class UploadedPic(models.Model):
+    pic = models.BinaryField(db_column='pic', blank=True, editable=True)
+    tipo_mime = models.CharField(u"tipo MIME", max_length=255)
+    user = models.CharField(max_length=255, default="")
+
+    def __str__(self):
+        return u"%s:%s" % (self.id, self.tipo_mime)
+
+
 
 class Recibido(models.Model):
     message_id = models.ForeignKey(Message, on_delete=models.CASCADE)
