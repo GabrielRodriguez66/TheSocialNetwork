@@ -15,11 +15,10 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
 from social.admin import SocialNetworkBackend
-from social.forms import RegisterForm, LoginForm, ProfileHandle, ProfilePic
-from .forms import SearchForm, ShoutForm
-from .models import SocialNetworkUser, Message, FriendRequested, UploadedPic
+from social.forms import ProfileHandle, ProfilePic
 from social.forms import RegisterForm, LoginForm, ChatForm, SearchForm, ShoutForm, ReceiverForm
 from .models import SocialNetworkUser, Message, FriendRequested, Chat
+from .models import UploadedPic
 
 
 @never_cache
@@ -43,8 +42,7 @@ def asocia_usuario(request):
 def friends_view(request):
     form = ChatForm()
     friends = request.user.socialnetworkuser.friends.all()
-    return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form, 'shouts':
-        Message.objects.filter(recipients=request.user.socialnetworkuser).order_by('-pub_date') })
+    return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form,})
 
 
 def logout_view(request):
