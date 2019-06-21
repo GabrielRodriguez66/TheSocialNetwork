@@ -23,12 +23,12 @@
     <form action="" method="POST">
         {% csrf_token %}
         {{ form }}
-        <button class="btn btn-primary btn-sm" name="search" type="submit">search</button>
+        <button class="btn btn-info btn-sm" name="search" type="submit">search</button>
     </form>
     <ul>
-        {% for socialnet_user, is_friend in users %}
+        {% for user, is_friend, f_request in users %}
             <li>
-                {{ socialnet_user.usuario.username }}
+                {{ user.usuario.username }}
                 {% if is_friend %}
 
                     <!-- Button trigger modal -->
@@ -66,11 +66,10 @@
                             </div>
                         </div>
                     </div>
-
-                    <a href="{% url "social:unfriend" socialnet_user.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
+                    <a href="{% url "social:unfriend" user.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
 
                 {% else %}
-                    <a href="{% url "social:friend_request" socialnet_user.id %}" class="btn btn-success btn-sm">Add Friend</a>
+                    <a href="{% url "social:friend_request" user.id %}" class="btn btn-success btn-sm">Add Friend</a>
                 {% endif %}
 
             </li><br>

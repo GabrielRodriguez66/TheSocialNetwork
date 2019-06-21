@@ -5,6 +5,8 @@ import django
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
+from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -17,6 +19,8 @@ from django.views.decorators.http import require_http_methods
 from social.admin import SocialNetworkBackend
 from social.forms import ProfileHandle, ProfilePic
 from social.forms import RegisterForm, LoginForm, ChatForm, SearchForm, ShoutForm, ReceiverForm
+from .models import PENDING_STATUS, ACCEPTED_STATUS, \
+    REJECTED_STATUS, IGNORED_STATUS, CANCELED_STATUS, REQUEST_STATUS_CHOICES
 from .models import SocialNetworkUser, Message, FriendRequested, Chat, Recibido
 from .models import UploadedPic
 
@@ -79,7 +83,8 @@ def register(request):
             if authenticated:
                 if not SocialNetworkUser.objects.filter(usuario__username=authenticated.username).exists():
                     user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
-                    auth_only_backend.create_user(authenticated, user_info)
+                    user = auth_only_backend.create_user(authenticated, user_info)
+                    django.contrib.auth.login(request, user)
                     return HttpResponseRedirect(reverse("social:timeline"))
                 else:
                     return render(request, "social/register.html", context={'form': form,
@@ -109,18 +114,16 @@ def search(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            if request.POST["username"] != '':
-                users = SocialNetworkUser.objects.filter(usuario__username__iexact=request.POST["username"])
-                if not users.first():
-                    users = SocialNetworkUser.objects.filter(
-                        Q(usuario__username__trigram_similar=request.POST["username"])
-                        | Q(usuario__username__icontains=request.POST["username"])) \
-                        .exclude(usuario=request.user)
-
+            clean_search_name = form.cleaned_data["username"]
+            if clean_search_name != '':
+                users = SocialNetworkUser.objects.annotate(
+                    similarity=TrigramSimilarity('usuario__username', clean_search_name)).filter(
+                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
+                    .exclude(usuario=request.user)
     else:
         form = SearchForm()
     context = {
-        'users': [(user, auth in user.friends.all()) for user in users],
+        'users': [(user, auth in user.friends.all(), FriendRequested.objects.filter(destinatario=user, remitente=auth, status=PENDING_STATUS).first()) for user in users],
         'form': form,
         'chat': ChatForm(),
         'auth_user': auth
@@ -129,8 +132,10 @@ def search(request):
 
 
 def friend_request(request, friend_pk):
-    req = FriendRequested.objects.create(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk)
-    request.user.socialnetworkuser.requesting.add(req)
+    if not FriendRequested.objects.filter(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk,
+                                          status=PENDING_STATUS).first():
+        req = FriendRequested.objects.create(remitente=request.user.socialnetworkuser, destinatario_id=friend_pk)
+        request.user.socialnetworkuser.requesting.add(req)
     return HttpResponseRedirect(reverse('social:search'))
 
 
@@ -138,10 +143,25 @@ def respond_request(request, request_pk, accepted):
     req = get_object_or_404(FriendRequested, pk=request_pk)
     dest = req.destinatario
     rem = req.remitente
-    if accepted == 1:
+    status_choices = dict(REQUEST_STATUS_CHOICES)
+    if accepted == ACCEPTED_STATUS:
         dest.friends.add(rem)
-    rem.requesting.remove(req)
-    FriendRequested.objects.filter(pk=request_pk).delete()
+        req.status = ACCEPTED_STATUS
+        message = Message.objects.create(text=status_choices.get(ACCEPTED_STATUS), author=dest,
+                                         pub_date=timezone.now())
+        message.recipients.add(rem)
+        message.recipients.add(dest)
+    elif accepted == REJECTED_STATUS:
+        req.status = REJECTED_STATUS
+        message = Message.objects.create(text=status_choices.get(REJECTED_STATUS), author=dest,
+                                         pub_date=timezone.now())
+        message.recipients.add(rem)
+        message.recipients.add(dest)
+    elif accepted == IGNORED_STATUS:
+        req.status = IGNORED_STATUS
+    elif accepted == CANCELED_STATUS:
+        req.status = CANCELED_STATUS
+    req.save()
     return HttpResponseRedirect(reverse('social:timeline'))
 
 
@@ -298,4 +318,30 @@ def delete_pic(request):
         return HttpResponseRedirect(reverse("social:profile"))
     else:
         return HttpResponseRedirect(reverse("social:profile"))
+
+@login_required
+def friend_prof(request, friend_usuario_first_name):
+    friend = request.user.socialnetworkuser.friends.get(usuario__first_name=friend_usuario_first_name)
+    if friend.has_pic:
+        data = UploadedPic.objects.get(user=friend)
+        pic_data = str(bytes(data.pic)).split("'")[1]
+        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
+    else:
+        pic = "/static/social/images/default.jpg"
+    return render(request, 'social/friend_profile.html', {"friend": friend, "pic_url": pic})
+
+
+@login_required
+def delete_prof(request):
+    user = request.user.socialnetworkuser
+    for friend in user.friends.all():
+        user.friends.remove(friend)
+    if user.has_pic:
+        UploadedPic.objects.get(user=user).delete()
+        user.has_pic = False
+        user.save()
+    django.contrib.auth.logout(request)
+    User.objects.get(username=user.usuario.username).delete()
+    return HttpResponseRedirect(settings.LOGIN_URL)
+
 

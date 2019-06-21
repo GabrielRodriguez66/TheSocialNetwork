@@ -63,6 +63,7 @@
                     </div>
 
                     <a href="{% url "social:unfriend" friend.id "friends"%}" class="btn  btn-danger btn-sm" > Unfriend </a>
+                    <a href="{% url "social:friend_profile" friend.usuario.first_name %}" class="btn btn-primary btn-sm" > Profile </a>
                     <br>
                     <br>
 
