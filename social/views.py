@@ -15,8 +15,8 @@ from django.views.decorators.http import require_http_methods
 
 from social.admin import SocialNetworkBackend
 from social.forms import RegisterForm, LoginForm, ReceiverForm
-from .forms import SearchForm, ShoutForm, TimelineFilter
-from .models import SocialNetworkUser, Message, FriendRequested
+from .forms import SearchForm, ShoutForm
+from .models import SocialNetworkUser, Recibido, Message, FriendRequested
 
 
 @never_cache
@@ -144,8 +144,7 @@ def search_view_unfriend(request, friend_pk):
 
 @login_required
 def timeline(request):
-    messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
-        recipients=request.user.socialnetworkuser)).order_by('-pub_date')
+    displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) | Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
     senderform = SearchForm(request.POST)
     receiverform = ReceiverForm(request.POST)
     if request.method == 'POST':
@@ -155,27 +154,33 @@ def timeline(request):
             message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
                                              pub_date=timezone.now())
             for recipient in recipients:
-                message.recipients.add(recipient)
+                Recibido.objects.create(message_id=message, user_id=recipient)
                 return HttpResponseRedirect(reverse("social:timeline"))
         if request.POST['filter'] == '1':
             if senderform.is_valid():
+                username = senderform.cleaned_data["username"]
                 if request.POST["username"] != '':
-                    messages = Message.objects.filter(author__usuario__username__contains=request.POST["username"]).order_by('-pub_date')
+                    displayedMessages = Recibido.objects.filter(message_id__author__usuario__username__contains=username).order_by('-message_id__pub_date')
         if request.POST['filter'] == '2':
             if receiverform.is_valid():
-                if request.POST["username"] != '':
-                    messages = Message.objects.filter(recipients=request.POST["username"]).order_by('-pub_date')
+                user = receiverform.cleaned_data["user"]
+                if request.POST["user"] != '':
+                    displayedMessages = Recibido.objects.filter(user_id__usuario__username__contains=user).order_by('-message_id__pub_date')
         if request.POST['filter'] == '3':
-            messages = Message.objects.filter(pub_date__day=timezone.now().day).order_by('-pub_date')
+            displayedMessages = Recibido.objects.filter((Q(user_id=request.user.socialnetworkuser) |
+                                                Q(message_id__author=request.user.socialnetworkuser)),
+                                                        message_id__pub_date__day=timezone.now().day).order_by('-message_id__pub_date')
+
         if request.POST['filter'] == '4':
-            messages = Message.objects.filter(pub_date__day=timezone.now().day).order_by('-pub_date')
+            displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
+                                                Q(message_id__author=request.user.socialnetworkuser), message_id__chat_id=None).order_by('-message_id__pub_date')
         if request.POST['filter'] == '5':
-            messages = Message.objects.filter(Q(author=request.user.socialnetworkuser) | Q(
-                recipients=request.user.socialnetworkuser)).order_by('-pub_date')
+            displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
+                                                Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
     else:
         form = ShoutForm()
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
-    return render(request, 'social/timeline.html', {'shouts': messages,
+    return render(request, 'social/timeline.html', {'messages': displayedMessages,
                                                     'forms': form,
                                                     'friend_requests': friend_requests,
                                                     'senderform': senderform,
@@ -195,5 +200,5 @@ def chat_manager(request, friend_pk, view):
                                                pub_date=timezone.now())
         recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
         # message.recipients.add(request.user.socialnetworkuser)
-        message.recipients.add(recipient)
+        Recibido.objects.create(message_id=message, user_id=recipient)
         return HttpResponseRedirect(reverse("social:"+view))
