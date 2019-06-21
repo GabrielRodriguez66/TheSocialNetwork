@@ -110,11 +110,11 @@ def search(request):
     if request.method == 'POST':
         form = SearchForm(request.POST)
         if form.is_valid():
-            clean_auth_name = form.cleaned_data["username"]
-            if request.POST["username"] != '':
+            clean_search_name = form.cleaned_data["username"]
+            if clean_search_name != '':
                 users = SocialNetworkUser.objects.annotate(
-                    similarity=TrigramSimilarity('usuario__username', clean_auth_name)).filter(
-                    Q(usuario__username__icontains=clean_auth_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
+                    similarity=TrigramSimilarity('usuario__username', clean_search_name)).filter(
+                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
                     .exclude(usuario=request.user)
     else:
         form = SearchForm()
