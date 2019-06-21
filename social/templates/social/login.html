@@ -11,6 +11,7 @@
     <form action="{% url "social:login_view" %}" method="POST">
     {% csrf_token %}
     {{ form }}
+         <input type="checkbox" onclick="showPass()">Mostrar contraseña
          <div class="center">
     <button class="cancelbtn" onclick="window.location.href = '{% url "social:register" %}'">Register</button>
              <button type="submit">Log-In</button>
