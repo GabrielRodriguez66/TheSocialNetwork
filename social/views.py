@@ -252,3 +252,13 @@ def delete_pic(request):
     else:
         return HttpResponseRedirect(reverse("social:profile"))
 
+
+def friend_prof(request, friend_pk):
+    friend = request.user.socialnetworkuser.friends.get(pk=friend_pk)
+    if friend.has_pic:
+        data = UploadedPic.objects.get(user=friend)
+        pic_data = str(bytes(data.pic)).split("'")[1]
+        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
+    else:
+        pic = "/static/social/images/default.jpg"
+    return render(request, 'social/friend_profile.html', {"friend": friend, "pic_url": pic})

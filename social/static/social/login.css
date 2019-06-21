@@ -1,3 +1,8 @@
+body{
+    background-image: url('https://d2v9y0dukr6mq2.cloudfront.net/video/thumbnail/GfRLKaE/videoblocks-social-network-connection-background-concept_h6vcmgytm_thumbnail-full01.png ');
+    background-repeat: no-repeat;
+    background-size: cover;
+}
 /* Bordered form */
 .container form {
   display: inline-block;
