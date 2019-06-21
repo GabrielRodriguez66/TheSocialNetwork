@@ -114,7 +114,7 @@ def search(request):
             if request.POST["username"] != '':
                 users = SocialNetworkUser.objects.annotate(
                     similarity=TrigramSimilarity('usuario__username', clean_auth_name)).filter(
-                    Q(usuario__username__icontains=clean_auth_name) | Q(similarity__gt=0.3)).order_by('-similarity')\
+                    Q(usuario__username__icontains=clean_auth_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
                     .exclude(usuario=request.user)
     else:
         form = SearchForm()
