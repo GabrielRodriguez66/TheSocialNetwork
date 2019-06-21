@@ -30,8 +30,9 @@
                             <li>
                                 <div class="card-body">
                                     <h5>{{ req.remitente.usuario.first_name }}</h5>
-                                    <a href="{% url "social:respond_request" req.pk 1 %}" class ="btn btn-success"> Accept </a>
-                                    <a href="{% url "social:respond_request" req.pk 0 %}" class ="btn btn-danger"> Reject </a>
+                                    <a href="{% url "social:respond_request" req.pk 2 %}" class ="btn btn-success"> Accept </a>
+                                    <a href="{% url "social:respond_request" req.pk 3 %}" class ="btn btn-danger"> Reject </a>
+                                    <a href="{% url "social:respond_request" req.pk 4 %}" class ="btn btn-secondary"> Ignore </a>
                                 </div>
                             </li> <br>
                         {% endfor %}
