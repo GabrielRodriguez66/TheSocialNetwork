@@ -10,6 +10,7 @@ urlpatterns = [
     path('search/', views.search, name="search"),
     path(r"register/", views.register, name="register"),
     path("friend/<int:friend_pk>", views.friend_request, name="friend_request"),
+    path("friend/<str:friend_usuario_first_name>/profile", views.friend_prof, name='friend_profile'),
     path("respond/<int:request_pk>/<int:accepted>", views.respond_request, name="respond_request"),
     path("unfriend/<int:friend_pk>/<str:view>", views.unfriend, name="unfriend"),
     path(r'asocia_usuario/', views.asocia_usuario, name='asocia_usuario'),
@@ -17,6 +18,7 @@ urlpatterns = [
     path("logout/", views.logout_view, name="logout_view"),
     path("profile/", views.profile, name="profile"),
     path("profile/picture", views.profile_pic, name="profile_pic"),
-    path("profile/delete", views.delete_pic, name="delete_pic"),
-    path("friend/<str:friend_usuario_first_name>/profile", views.friend_prof, name='friend_profile')
+    path("profile/delete-pic", views.delete_pic, name="delete_pic"),
+    path('profile/delete', views.delete_prof, name="delete_prof")
+
 ]

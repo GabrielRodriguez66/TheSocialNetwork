@@ -5,6 +5,7 @@ import django
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Q
 from django.http import HttpResponseRedirect, HttpResponse, Http404
@@ -78,7 +79,8 @@ def register(request):
             if authenticated:
                 if not SocialNetworkUser.objects.filter(usuario__username=authenticated.username).exists():
                     user_info = auth_only_backend.get_user_info(form.cleaned_data['buscador_de_usuario'])
-                    auth_only_backend.create_user(authenticated, user_info)
+                    user = auth_only_backend.create_user(authenticated, user_info)
+                    django.contrib.auth.login(request, user)
                     return HttpResponseRedirect(reverse("social:timeline"))
                 else:
                     return render(request, "social/register.html", context={'form': form,
@@ -241,7 +243,7 @@ def upload(request, obj):
     except KeyError:
         pass
 
-
+@login_required
 def delete_pic(request):
     user = request.user.socialnetworkuser
     if user.has_pic:
@@ -252,7 +254,7 @@ def delete_pic(request):
     else:
         return HttpResponseRedirect(reverse("social:profile"))
 
-
+@login_required
 def friend_prof(request, friend_usuario_first_name):
     friend = request.user.socialnetworkuser.friends.get(usuario__first_name=friend_usuario_first_name)
     if friend.has_pic:
@@ -262,3 +264,19 @@ def friend_prof(request, friend_usuario_first_name):
     else:
         pic = "/static/social/images/default.jpg"
     return render(request, 'social/friend_profile.html', {"friend": friend, "pic_url": pic})
+
+
+@login_required
+def delete_prof(request):
+    user = request.user.socialnetworkuser
+    for friend in user.friends.all():
+        user.friends.remove(friend)
+    if user.has_pic:
+        UploadedPic.objects.get(user=user).delete()
+        user.has_pic = False
+        user.save()
+    django.contrib.auth.logout(request)
+    User.objects.get(username=user.usuario.username).delete()
+    return HttpResponseRedirect(settings.LOGIN_URL)
+
+
