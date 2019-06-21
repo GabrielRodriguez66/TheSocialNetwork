@@ -1,6 +1,6 @@
 {% load static %}
 
-<link rel="stylesheet" type="text/css" href="{% static 'polls/css/style.css' %}">
+<link rel="stylesheet" type="text/css" href="{% static 'social/profile.css' %}">
 
 <!-- Bootstrap CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
@@ -35,6 +35,9 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link" id="navLogout" href="{% url "social:profile" %}">Profile</a>
                 </li>
             {% endblock%}
 

@@ -13,6 +13,9 @@
     <li class="nav-item">
         <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navLogout" href="{% url "social:profile" %}">Profile</a>
+    </li>
 {% endblock%}
 
 {% block content %}
@@ -24,12 +27,12 @@
                     {{ friend.usuario.username }}
 
                     <!-- Button trigger modal -->
-                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat{{ forloop.counter }}">
+                    <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal-Chat">
                         Chat
                     </button>
 
                     <!-- Modal -->
-                    <div class="modal fade" id="Modal-Chat{{ forloop.counter }}" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
+                    <div class="modal fade" id="Modal-Chat" tabindex="-1" role="dialog" aria-labelledby="ModalScrollableTitle" aria-hidden="true">
                         <div class="modal-dialog modal-dialog-scrollable" role="document">
                             <div class="modal-content">
                                 <div class="modal-header">
