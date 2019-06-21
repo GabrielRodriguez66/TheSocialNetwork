@@ -18,5 +18,5 @@ urlpatterns = [
     path("profile/", views.profile, name="profile"),
     path("profile/picture", views.profile_pic, name="profile_pic"),
     path("profile/delete", views.delete_pic, name="delete_pic"),
-    path("friend/<int:friend_pk>/profile", views.friend_prof, name='friend_profile')
+    path("friend/<str:friend_usuario_first_name>/profile", views.friend_prof, name='friend_profile')
 ]
