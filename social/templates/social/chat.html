@@ -2,7 +2,7 @@
 
 {% block active %}
     <li class="nav-item">
-        <a class="nav-link" id="navTimeline" href="{%  url "social:timeline" %}">Timeline<span class="sr-only">(current)</span></a>
+        <a class="nav-link" id="navTimeline" href="{%  url "social:timeline" %}">Timeline</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" id="navSearch" href="{%  url "social:search" %}">Search</a>
@@ -11,7 +11,10 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item active">
-        <a class="nav-link" id="navMyFriends" href=""> Chat </a>
+        <a class="nav-link" id="navMyFriends" href=""> Chat<span class="sr-only">(current)</span> </a>
+    </li>
+     <li class="nav-item">
+        <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
@@ -23,7 +26,7 @@
     <h2> Created: {{ date }}</h2>
     <br> <br>
 
-    <form action="{% url "social:new_chat" friend.id "none" chat_id%}" method="post">
+    <form action="{% url "social:new_chat" friend_pk "none" chat_id%}" method="post">
         {% csrf_token %}
         {{ chat_form }}
         <input class="btn btn-info btn-sm" id="submitButton" type="submit" value="Send">

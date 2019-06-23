@@ -5,10 +5,9 @@ from social.widgets import BuscadorDeUsuarioField
 
 CHOICES = [
             ('2', 'Receiver'),
-
-
-
 ]
+
+
 class ShoutForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}), label='Shout', max_length=240,
                            required=True)
