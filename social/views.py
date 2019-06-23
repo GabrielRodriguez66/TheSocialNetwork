@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
@@ -21,7 +21,8 @@ from social.forms import ProfileHandle, ProfilePic
 from social.forms import RegisterForm, LoginForm, ChatForm, SearchForm, ShoutForm, ReceiverForm
 from .models import PENDING_STATUS, ACCEPTED_STATUS, \
     REJECTED_STATUS, IGNORED_STATUS, CANCELED_STATUS, REQUEST_STATUS_CHOICES
-from .models import SocialNetworkUser, Message, FriendRequested, Chat, Recibido
+from .models import Recibido
+from .models import SocialNetworkUser, Message, FriendRequested, Chat
 from .models import UploadedPic
 
 
@@ -118,7 +119,7 @@ def search(request):
             if clean_search_name != '':
                 users = SocialNetworkUser.objects.annotate(
                     similarity=TrigramSimilarity('usuario__username', clean_search_name)).filter(
-                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
+                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity') \
                     .exclude(usuario=request.user)
     else:
         form = SearchForm()
@@ -148,19 +149,19 @@ def respond_request(request, request_pk, accepted):
         dest.friends.add(rem)
         req.status = ACCEPTED_STATUS
         message = Message.objects.create(text=status_choices.get(ACCEPTED_STATUS), author=dest,
-                                         pub_date=timezone.now())
-        message.recipients.add(rem)
-        message.recipients.add(dest)
+                                         pub_date=timezone.now(), chat=Chat.objects.create(creation_date=timezone.now()))
+        Recibido.objects.create(message_id=message, user_id=rem)
     elif accepted == REJECTED_STATUS:
         req.status = REJECTED_STATUS
         message = Message.objects.create(text=status_choices.get(REJECTED_STATUS), author=dest,
-                                         pub_date=timezone.now())
-        message.recipients.add(rem)
-        message.recipients.add(dest)
+                                         pub_date=timezone.now(), chat=Chat.objects.create(creation_date=timezone.now()))
+        Recibido.objects.create(message_id=message, user_id=rem)
     elif accepted == IGNORED_STATUS:
         req.status = IGNORED_STATUS
     elif accepted == CANCELED_STATUS:
         req.status = CANCELED_STATUS
+        req.save()
+        return HttpResponseRedirect(reverse('social:search'))
     req.save()
     return HttpResponseRedirect(reverse('social:timeline'))
 
@@ -188,31 +189,32 @@ def timeline(request):
             if senderform.is_valid():
                 username = senderform.cleaned_data["username"]
                 if request.POST["username"] != '':
-                    displayedMessages = Recibido.objects.filter(message_id__author__usuario__username__contains=username).order_by('-message_id__pub_date')
+                    displayedMessages = Recibido.objects.filter(message_id__author__usuario__username__icontains=username).order_by('-message_id__pub_date')
         if request.POST['filter'] == '2':
             if receiverform.is_valid():
                 user = receiverform.cleaned_data["user"]
                 if request.POST["user"] != '':
-                    displayedMessages = Recibido.objects.filter(user_id__usuario__username__contains=user).order_by('-message_id__pub_date')
+                    displayedMessages = Recibido.objects.filter(user_id__usuario__username__icontains=user).order_by('-message_id__pub_date')
         if request.POST['filter'] == '3':
             displayedMessages = Recibido.objects.filter((Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser)),
+                                                         Q(message_id__author=request.user.socialnetworkuser)),
                                                         message_id__pub_date__day=timezone.now().day).order_by('-message_id__pub_date')
 
         if request.POST['filter'] == '4':
             displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser), message_id__chat_id=None).order_by('-message_id__pub_date')
+                                                        Q(message_id__author=request.user.socialnetworkuser), message_id__chat_id=None).order_by('-message_id__pub_date')
         if request.POST['filter'] == '5':
             displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
+                                                        Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
     else:
         form = ShoutForm()
-    friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser.usuario_id)
-    return render(request, 'social/timeline.html', {'messages': displayedMessages,
+    friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser, status=PENDING_STATUS)
+    return render(request, 'social/timeline.html', {'messages_recibido': displayedMessages,
                                                     'forms': form,
                                                     'friend_requests': friend_requests,
                                                     'senderform': senderform,
                                                     'receiverform': receiverform,
+                                                    'reject_text': dict(REQUEST_STATUS_CHOICES).get(REJECTED_STATUS),
                                                     })
 
 
@@ -236,10 +238,12 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
             message.save()
             creation_date = chat.creation_date
             messages = [message] if chat_pk == 0 else chat.message_set.order_by('-pub_date')
-            friend = message.recipients.first()
-            return render(request, 'social/chat.html',
-                          {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
-                           'chat_form': ChatForm()})
+            recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+                values_list('message_id__text', 'message_id__author__usuario__first_name',
+                            'user_id__usuario__first_name',
+                            'message_id__pub_date')
+            return render(request, 'social/chat.html', {"chat_id": chat.id, "date": creation_date,
+                                                       "recibido_messages": recibido_messages, 'chat_form': ChatForm()})
     return HttpResponseRedirect(reverse("social:"+view))
 
 
@@ -249,8 +253,11 @@ def open_chat_view(request, message_id):
     chat = message.chat
     messages = chat.message_set.order_by('-pub_date')
     creation_date = chat.creation_date
-    friend = message.recipients.first()
-    return render(request, 'social/chat.html', {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
+    recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+        values_list('message_id__text', 'message_id__author__usuario__first_name',
+                    'user_id__usuario__first_name',
+                    'message_id__pub_date')
+    return render(request, 'social/chat.html', {"chat_id": chat.id, "recibido_messages": recibido_messages, "date": creation_date,
                                                 'chat_form': ChatForm()})
 
 

@@ -50,9 +50,8 @@
 
                                 </div>
 
-                                <form action="{% url "social:new_chat" socialnet_user.id "none" 0%}" method="POST">
+                                <form action="{% url "social:new_chat" user.id "none" 0%}" method="POST">
                                     {% csrf_token %}
-
                                     <div class="modal-body">
                                         {{ chat }}
                                     </div>
@@ -67,7 +66,8 @@
                         </div>
                     </div>
                     <a href="{% url "social:unfriend" user.id "search"%}" class="btn btn-danger btn-sm">Unfriend</a>
-
+                {% elif f_request %}
+                    <a href="{% url "social:respond_request" f_request.pk 5 %}" class="btn btn-danger btn-sm">Cancel Request</a>
                 {% else %}
                     <a href="{% url "social:friend_request" user.id %}" class="btn btn-success btn-sm">Add Friend</a>
                 {% endif %}
