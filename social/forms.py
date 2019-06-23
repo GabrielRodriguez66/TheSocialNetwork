@@ -3,13 +3,11 @@ from django.core.exceptions import ValidationError
 
 from social.widgets import BuscadorDeUsuarioField
 
-
 CHOICES = [
             ('2', 'Receiver'),
-
-
-
 ]
+
+
 class ShoutForm(forms.Form):
     text = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}), label='Shout', max_length=240,
                            required=True)
@@ -35,12 +33,6 @@ class RegisterForm(forms.Form):
                                                  required=True)
     password = forms.CharField(label=u'Contraseña', widget=forms.PasswordInput, required=True, strip=True)
 
-    # def clean_buscador_de_usuario(self):
-    #     if self.data['username'] == "":
-    #         raise ValidationError("Username cannot be empty.")
-    #     else:
-    #         self.clean_data['username'] = self.data['username']
-    #
     def clean_password(self):
         password = self.data['password']
         if len(password) < 8 or len(password) > 30:

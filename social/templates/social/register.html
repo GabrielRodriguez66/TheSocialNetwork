@@ -7,25 +7,28 @@
 <style>
 
 </style>
+
 {% block title %}
-<h2 class="center">Please register</h2>
+    <h2 class="center">Please register</h2>
 {%  endblock %}
+
 <div class="center">{% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}</div>
+
 {%  block content %}
     <div class="center">
-    <div class="container">
-    <form action="{% url "social:register" %}" method="POST">
-        {% csrf_token %}
-        {{ form }}
-          <input type="checkbox" onclick="showPass()">Mostrar contraseña
-         <div class="center">
-        <button type="submit">Register</button>
-             <button class="cancelbtn" onclick="window.location.href = '{% url "social:login_view" %}'">Log-In</button>
-         </div>
-    </form>
+        <div class="container">
+            <form action="{% url "social:register" %}" method="POST">
+                {% csrf_token %}
+                {{ form }}
+                <input type="checkbox" onclick="showPass()">Mostrar contraseña
+                <div class="center">
+                    <button type="submit">Register</button>
+                    <button class="cancelbtn" onclick="window.location.href = '{% url "social:login_view" %}'">Log-In</button>
+                </div>
+            </form>
         </div>
-        </div>
-     <div class="imgcontainer">
-    <img src="{% static "social/images/default_home.png" %}">
+    </div>
+    <div class="imgcontainer">
+        <img src="{% static "social/images/default_home.png" %}">
     </div>
 {%  endblock %}

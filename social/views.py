@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import TrigramSimilarity
 from django.core.exceptions import ObjectDoesNotExist
-from django.db.models import Q
+from django.db.models import Q, Subquery
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from django.shortcuts import render, reverse
@@ -119,12 +119,13 @@ def search(request):
             if clean_search_name != '':
                 users = SocialNetworkUser.objects.annotate(
                     similarity=TrigramSimilarity('usuario__username', clean_search_name)).filter(
-                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity')\
+                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity') \
                     .exclude(usuario=request.user)
     else:
         form = SearchForm()
     context = {
-        'users': [(user, auth in user.friends.all(), FriendRequested.objects.filter(destinatario=user, remitente=auth, status=PENDING_STATUS).first()) for user in users],
+        'users': [(user, auth in user.friends.all(), FriendRequested.objects.filter(destinatario=user, remitente=auth,
+                                                                    status=PENDING_STATUS).first()) for user in users],
         'form': form,
         'chat': ChatForm(),
         'auth_user': auth
@@ -167,13 +168,14 @@ def respond_request(request, request_pk, accepted):
 
 
 def search_view_unfriend(request, friend_pk):
-    get_object_or_404(SocialNetworkUser, pk=SocialNetworkUser.objects.first().id).friends.remove(friend_pk)
+    get_object_or_404(SocialNetworkUser, pk=request.user.socialnetworkuser.id).friends.remove(friend_pk)
     return HttpResponseRedirect(reverse('social:search'))
 
 
 @login_required
 def timeline(request):
-    displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) | Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
+    displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) | Q(message_id__author=
+                                                request.user.socialnetworkuser)).order_by('-message_id__pub_date')
     senderform = SearchForm(request.POST)
     receiverform = ReceiverForm(request.POST)
     if request.method == 'POST':
@@ -189,23 +191,28 @@ def timeline(request):
             if senderform.is_valid():
                 username = senderform.cleaned_data["username"]
                 if request.POST["username"] != '':
-                    displayedMessages = Recibido.objects.filter(message_id__author__usuario__username__icontains=username).order_by('-message_id__pub_date')
+                    displayedMessages = Recibido.objects.filter(message_id__author__usuario__username__icontains=
+                                                                username).order_by('-message_id__pub_date')
         if request.POST['filter'] == '2':
             if receiverform.is_valid():
                 user = receiverform.cleaned_data["user"]
                 if request.POST["user"] != '':
-                    displayedMessages = Recibido.objects.filter(user_id__usuario__username__icontains=user).order_by('-message_id__pub_date')
+                    displayedMessages = Recibido.objects.filter(user_id__usuario__username__icontains=user).\
+                                                                order_by('-message_id__pub_date')
         if request.POST['filter'] == '3':
             displayedMessages = Recibido.objects.filter((Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser)),
-                                                        message_id__pub_date__day=timezone.now().day).order_by('-message_id__pub_date')
+                                                         Q(message_id__author=request.user.socialnetworkuser)),
+                                                        message_id__pub_date__day=timezone.now().day).\
+                                                        order_by('-message_id__pub_date')
 
         if request.POST['filter'] == '4':
             displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser), message_id__chat_id=None).order_by('-message_id__pub_date')
+                                                        Q(message_id__author=request.user.socialnetworkuser),
+                                                        message_id__chat_id=None).order_by('-message_id__pub_date')
         if request.POST['filter'] == '5':
             displayedMessages = Recibido.objects.filter(Q(user_id=request.user.socialnetworkuser) |
-                                                Q(message_id__author=request.user.socialnetworkuser)).order_by('-message_id__pub_date')
+                                                        Q(message_id__author=request.user.socialnetworkuser)).\
+                                                        order_by('-message_id__pub_date')
     else:
         form = ShoutForm()
     friend_requests = FriendRequested.objects.filter(destinatario=request.user.socialnetworkuser, status=PENDING_STATUS)
@@ -236,12 +243,13 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
                                                                                                             pk=chat_pk)
             message.chat = chat
             message.save()
-            creation_date = chat.creation_date
-            messages = [message] if chat_pk == 0 else chat.message_set.order_by('-pub_date')
-            friend = message.recipients.first()
-            return render(request, 'social/chat.html',
-                          {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
-                           'chat_form': ChatForm()})
+            creation_date, messages = chat.creation_date, chat.message_set
+            recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+                values_list('message_id__text', 'message_id__author__usuario__first_name',
+                            'user_id__usuario__first_name',
+                            'message_id__pub_date').order_by('-message_id__pub_date')
+            return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "date": creation_date,
+                                                     "recibido_messages": recibido_messages, 'chat_form': ChatForm()})
     return HttpResponseRedirect(reverse("social:"+view))
 
 
@@ -251,9 +259,14 @@ def open_chat_view(request, message_id):
     chat = message.chat
     messages = chat.message_set.order_by('-pub_date')
     creation_date = chat.creation_date
-    friend = message.recipients.first()
-    return render(request, 'social/chat.html', {"chat_id": chat.id, "friend": friend, "date": creation_date, 'chat_messages': messages,
-                                                'chat_form': ChatForm()})
+    recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+        values_list('message_id__text', 'message_id__author__usuario__first_name',
+                    'user_id__usuario__first_name',
+                    'message_id__pub_date').order_by('-message_id__pub_date')
+
+    friend_pk = message.recipients.first().id if message.author.usuario == request.user else message.author.id
+    return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "recibido_messages":
+                                                recibido_messages, "date": creation_date, 'chat_form': ChatForm()})
 
 
 @login_required
@@ -293,20 +306,20 @@ def upload(request, obj):
     exists = UploadedPic.objects.filter(user=request.user.socialnetworkuser).count()
     try:
         if exists == 0:
-            pdf = UploadedPic()
+            img = UploadedPic()
             file = obj
             file_data = file.read()
-            pdf.pic = base64.b64encode(file_data)
-            pdf.tipo_mime = "image/jpeg"
-            pdf.user = request.user.socialnetworkuser
-            pdf.save()
-            obj.archivo = pdf
+            img.pic = base64.b64encode(file_data)
+            img.tipo_mime = "image/jpeg"
+            img.user = request.user.socialnetworkuser
+            img.save()
+            obj.archivo = img
         else:
-            pdf = UploadedPic.objects.get(user=request.user.socialnetworkuser)
+            img = UploadedPic.objects.get(user=request.user.socialnetworkuser)
             file_data = obj.read()
-            pdf.pic = base64.b64encode(file_data)
-            pdf.save()
-            obj.archivo = pdf
+            img.pic = base64.b64encode(file_data)
+            img.save()
+            obj.archivo = img
     except KeyError:
         pass
 
@@ -321,13 +334,14 @@ def delete_pic(request):
     else:
         return HttpResponseRedirect(reverse("social:profile"))
 
+
 @login_required
 def friend_prof(request, friend_usuario_first_name):
     friend = request.user.socialnetworkuser.friends.get(usuario__first_name=friend_usuario_first_name)
     if friend.has_pic:
         data = UploadedPic.objects.get(user=friend)
         pic_data = str(bytes(data.pic)).split("'")[1]
-        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
+        pic = "data:image/jpeg;base64, " + pic_data
     else:
         pic = "/static/social/images/default.jpg"
     return render(request, 'social/friend_profile.html', {"friend": friend, "pic_url": pic})

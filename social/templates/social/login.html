@@ -7,19 +7,19 @@
 
 {% block content %}
     <div class="center">
-<div class="container">
-    <form action="{% url "social:login_view" %}" method="POST">
-    {% csrf_token %}
-    {{ form }}
-         <input type="checkbox" onclick="showPass()">Mostrar contraseña
-         <div class="center">
-    <button class="cancelbtn" onclick="window.location.href = '{% url "social:register" %}'">Register</button>
-             <button type="submit">Log-In</button>
+        <div class="container">
+            <form action="{% url "social:login_view" %}" method="POST">
+                {% csrf_token %}
+                {{ form }}
+                <input type="checkbox" onclick="showPass()">Mostrar contraseña
+                <div class="center">
+                    <button class="cancelbtn" onclick="window.location.href = '{% url "social:register" %}'">Register</button>
+                    <button type="submit">Log-In</button>
+                </div>
+            </form>
         </div>
-    </form>
     </div>
-        </div>
     <div class="imgcontainer">
-     <img src="{% static "social/images/default_home.png" %}">
+        <img src="{% static "social/images/default_home.png" %}">
     </div>
 {% endblock %}

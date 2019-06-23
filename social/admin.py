@@ -31,9 +31,7 @@ class ActiveDirectoryBackend(ModelBackend):
                 return None
         else:
             user = None
-        if not user:
-            user = User(username=username, password='', is_active=True, is_staff=True, is_superuser=False)
-        return user
+
         #Proceder a validar contraseña
         try:
             con = self.bind()
