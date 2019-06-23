@@ -18,37 +18,38 @@
         <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
     </li>
 {% endblock%}
+
 {% block content %}
 
-<h2>Your Profile</h2>
-<h5>{{ request.user.first_name }} {{ request.user.last_name }}</h5>
-<h6><font color="#a9a9a9">@{{ request.user.socialnetworkuser.handle }}</font></h6>
+    <h2>Your Profile</h2>
+    <h5>{{ request.user.first_name }} {{ request.user.last_name }}</h5>
+    <h6><font color="#a9a9a9">@{{ request.user.socialnetworkuser.handle }}</font></h6>
     <div class="left">
         <div class="container">
             <img src="{{ pic_url }}" class="avatar" alt="Profile" />
         </div>
     </div>
-<form action="" method="POST">
-{% csrf_token %}
-{{ handle_form }}
-<button type="submit" class="btn btn-info btn-sm">Set handle</button>
-</form>
-  {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
-<div class="left">
-    <form enctype="multipart/form-data" action="{% url "social:profile_pic" %}" method="POST">
+    <form action="" method="POST">
         {% csrf_token %}
-        {{ pic_form }}
-        <div>
-    <button type="submit" class="btn btn-info btn-sm">Set profile picture</button>
-        </div>
+        {{ handle_form }}
+        <button type="submit" class="btn btn-info btn-sm">Set handle</button>
     </form>
-    <form action="{% url "social:delete_pic" %}" method="POST">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger btn-sm">Delete profile picture</button>
-    </form>
-    <form action="{% url "social:delete_prof" %}" method="POST">
-    {% csrf_token %}
-    <button type="submit" class="btn  btn-danger btn-sm">Delete account</button>
-    </form>
-</div>
+    {% if error_message %} <p> <strong> {{ error_message }}</strong> </p>{% endif %}
+    <div class="left">
+        <form enctype="multipart/form-data" action="{% url "social:profile_pic" %}" method="POST">
+            {% csrf_token %}
+            {{ pic_form }}
+            <div>
+                <button type="submit" class="btn btn-info btn-sm">Set profile picture</button>
+            </div>
+        </form>
+        <form action="{% url "social:delete_pic" %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger btn-sm">Delete profile picture</button>
+        </form>
+        <form action="{% url "social:delete_prof" %}" method="POST">
+            {% csrf_token %}
+            <button type="submit" class="btn  btn-danger btn-sm">Delete account</button>
+        </form>
+    </div>
 {% endblock %}

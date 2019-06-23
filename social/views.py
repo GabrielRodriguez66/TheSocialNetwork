@@ -291,20 +291,20 @@ def upload(request, obj):
     exists = UploadedPic.objects.filter(user=request.user.socialnetworkuser).count()
     try:
         if exists == 0:
-            pdf = UploadedPic()
+            img = UploadedPic()
             file = obj
             file_data = file.read()
-            pdf.pic = base64.b64encode(file_data)
-            pdf.tipo_mime = "image/jpeg"
-            pdf.user = request.user.socialnetworkuser
-            pdf.save()
-            obj.archivo = pdf
+            img.pic = base64.b64encode(file_data)
+            img.tipo_mime = "image/jpeg"
+            img.user = request.user.socialnetworkuser
+            img.save()
+            obj.archivo = img
         else:
-            pdf = UploadedPic.objects.get(user=request.user.socialnetworkuser)
+            img = UploadedPic.objects.get(user=request.user.socialnetworkuser)
             file_data = obj.read()
-            pdf.pic = base64.b64encode(file_data)
-            pdf.save()
-            obj.archivo = pdf
+            img.pic = base64.b64encode(file_data)
+            img.save()
+            obj.archivo = img
     except KeyError:
         pass
 
@@ -319,13 +319,14 @@ def delete_pic(request):
     else:
         return HttpResponseRedirect(reverse("social:profile"))
 
+
 @login_required
 def friend_prof(request, friend_usuario_first_name):
     friend = request.user.socialnetworkuser.friends.get(usuario__first_name=friend_usuario_first_name)
     if friend.has_pic:
         data = UploadedPic.objects.get(user=friend)
         pic_data = str(bytes(data.pic)).split("'")[1]
-        pic = "data:image/jpeg;base64, " + str(pic_data).split("'")[0]
+        pic = "data:image/jpeg;base64, " + pic_data
     else:
         pic = "/static/social/images/default.jpg"
     return render(request, 'social/friend_profile.html', {"friend": friend, "pic_url": pic})
