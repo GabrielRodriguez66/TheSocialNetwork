@@ -22,9 +22,9 @@
     <h1> My Friends </h1>
     {% if my_friends_list %}
         <ul>
-            {% for friend in my_friends_list %}
+            {% for friend_id, friend_username, friend_first_name in my_friends_list %}
                 <li>
-                    {{ friend.usuario.username }}
+                    {{ friend_username }}
 
                     <!-- Button trigger modal -->
                     <button class="btn btn-success btn-sm" data-toggle="modal" data-target="#Modal{{ forloop.counter }}">
@@ -45,7 +45,7 @@
 
                                 </div>
 
-                                <form action="{% url "social:new_chat" friend.id "none" 0%}" method="POST">
+                                <form action="{% url "social:new_chat" friend_id "none" 0%}" method="POST">
                                     {% csrf_token %}
 
                                     <div class="modal-body">
@@ -62,8 +62,8 @@
                         </div>
                     </div>
 
-                    <a href="{% url "social:unfriend" friend.id "friends"%}" class="btn  btn-danger btn-sm" > Unfriend </a>
-                    <a href="{% url "social:friend_profile" friend.usuario.first_name %}" class="btn btn-primary btn-sm" > Profile </a>
+                    <a href="{% url "social:unfriend" friend_id "friends"%}" class="btn  btn-danger btn-sm" > Unfriend </a>
+                    <a href="{% url "social:friend_profile" friend_first_name %}" class="btn btn-primary btn-sm" > Profile </a>
                     <br>
                     <br>
 

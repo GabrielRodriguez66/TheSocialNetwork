@@ -46,7 +46,7 @@ def asocia_usuario(request):
 @login_required
 def friends_view(request):
     form = ChatForm()
-    friends = request.user.socialnetworkuser.friends.all()
+    friends = request.user.socialnetworkuser.friends.all().values_list('id', 'usuario__username', 'usuario__first_name')
     return render(request, 'social/my_friends.html', {'my_friends_list': friends, 'form': form, })
 
 
@@ -117,14 +117,13 @@ def search(request):
         if form.is_valid():
             clean_search_name = form.cleaned_data["username"]
             if clean_search_name != '':
-                users = SocialNetworkUser.objects.annotate(
+                users = users.annotate(
                     similarity=TrigramSimilarity('usuario__username', clean_search_name)).filter(
-                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity') \
-                    .exclude(usuario=request.user)
+                    Q(usuario__username__icontains=clean_search_name) | Q(similarity__gt=0.5)).order_by('-similarity')
     else:
         form = SearchForm()
     context = {
-        'users': [(user, auth in user.friends.all(), FriendRequested.objects.filter(destinatario=user, remitente=auth,
+        'users': [(user, user.friends.filter(id=auth.id).exists(), FriendRequested.objects.filter(destinatario=user, remitente=auth,
                                                                     status=PENDING_STATUS).first()) for user in users],
         'form': form,
         'chat': ChatForm(),
@@ -238,7 +237,7 @@ def chat_manager(request, friend_pk, view=None, chat_pk=None):
                                          pub_date=timezone.now())
         recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
         Recibido.objects.create(message_id=message, user_id=recipient)
-        if chat_pk is not None:
+        if chat_pk:
             chat = Chat.objects.create(creation_date=timezone.now()) if chat_pk == 0 else get_object_or_404(Chat,
                                                                                                             pk=chat_pk)
             message.chat = chat
