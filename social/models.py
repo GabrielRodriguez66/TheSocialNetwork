@@ -59,7 +59,6 @@ class UploadedPic(models.Model):
         return u"%s:%s" % (self.id, self.tipo_mime)
 
 
-
 class Recibido(models.Model):
     message_id = models.ForeignKey(Message, on_delete=models.CASCADE)
     user_id = models.ForeignKey(SocialNetworkUser, on_delete=models.CASCADE)
