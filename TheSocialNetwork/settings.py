@@ -25,7 +25,8 @@ SECRET_KEY = 'xbe*b-n(7_xi%u0!tmxailg(e!a3ef++3ge+jh__5plt%h#d(='
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+#Added TechLab local IP
+ALLOWED_HOSTS = ['172.17.125.45', 'localhost', '127.0.0.1']
 
 
 # Application definition
