@@ -72,8 +72,10 @@ TEMPLATES = [
 ]
 
 # En settings
+AUTH_BACKEND = 'social.admin.DummyBackend'
 AUTHENTICATION_BACKENDS = (
-    'social.admin.SocialNetworkBackend',
+    # 'social.admin.SocialNetworkBackend',
+    AUTH_BACKEND,
 )
 
 NOTARIAT_ACTIVE_DIRECTORY = 'dcsj01.tribunales.local'

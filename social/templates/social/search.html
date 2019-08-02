@@ -11,6 +11,9 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" id="navChats" href="{% url "social:chats" %}">Chats</a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
     </li>
     <li class="nav-item">
@@ -19,6 +22,10 @@
 {% endblock%}
 
 {% block content %}
+
+    {% load static %}
+    <link rel="stylesheet" type="text/css" href="{% static 'social/style.css' %}">
+
     <h1>Search Users</h1>
     <form action="" method="POST">
         {% csrf_token %}
@@ -53,7 +60,9 @@
                                 <form action="{% url "social:new_chat" user.id "none" 0%}" method="POST">
                                     {% csrf_token %}
                                     <div class="modal-body">
-                                        {{ chat }}
+                                        <div class="container">
+                                            {{ chat }}
+                                        </div>
                                     </div>
 
                                     <div class="modal-footer">
