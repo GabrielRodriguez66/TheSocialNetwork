@@ -3,7 +3,7 @@ import json
 
 import django
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, load_backend
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib.postgres.search import TrigramSimilarity
@@ -16,7 +16,6 @@ from django.utils import timezone
 from django.views.decorators.cache import never_cache
 from django.views.decorators.http import require_http_methods
 
-from social.admin import SocialNetworkBackend
 from social.forms import ProfileHandle, ProfilePic
 from social.forms import RegisterForm, LoginForm, ChatForm, SearchForm, ShoutForm, ReceiverForm, CreateChatForm
 from .models import PENDING_STATUS, ACCEPTED_STATUS, \
@@ -39,7 +38,7 @@ def asocia_usuario(request):
                                    "nombre_usuario": usuario_existente.username,
                                    "email": usuario_existente.email, }))
     except ObjectDoesNotExist:
-        response.write(json.dumps(SocialNetworkBackend().get_user_info(request.POST.get('username', ""))))
+        response.write(json.dumps(load_backend(settings.AUTH_BACKEND).get_user_info(request.POST.get('username', ""))))
     return response
 
 
@@ -59,7 +58,7 @@ def login_view(request):
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
-            backend = SocialNetworkBackend()
+            backend = load_backend(settings.AUTH_BACKEND)
             user = backend.authenticate(request, form.cleaned_data['username'], form.cleaned_data['password'],
                                         must_exist=True)
             if user:
@@ -78,7 +77,7 @@ def register(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            auth_only_backend = SocialNetworkBackend()
+            auth_only_backend = load_backend(settings.AUTH_BACKEND)
             authenticated = auth_only_backend.authenticate(request, form.cleaned_data['buscador_de_usuario'],
                                                            form.cleaned_data['password'], must_exist=False)
             if authenticated:
