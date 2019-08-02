@@ -14,6 +14,12 @@ class ChatForm(forms.Form):
                            required=True)
 
 
+class CreateChatForm(forms.Form):
+    chat_name = forms.CharField(label='Chat Name', max_length=80, required=True)
+    text = forms.CharField(widget=forms.Textarea(attrs={'rows': 4, 'cols': 60}), label='Message Text', max_length=240,
+                           required=True)
+
+
 class SearchForm(forms.Form):
     username = forms.CharField(label='Search', max_length=120, required=False)
 

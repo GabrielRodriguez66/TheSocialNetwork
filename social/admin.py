@@ -125,3 +125,42 @@ class SocialNetworkBackend(ActiveDirectoryBackend):
         except User.DoesNotExist:
             user = None
         return user
+
+
+class DummyBackend(ModelBackend):
+    def authenticate(self, request, username=None, password=None, must_exist=True, **kwargs):
+        if must_exist:
+            user = self.get_user_by_username(username)
+        else:
+            user = User(username=username, password=password, is_active=True, is_staff=True, is_superuser=False)
+        return user
+
+    def get_user(self, user_id):
+        try:
+            return User.objects.get(pk=user_id)
+        except User.DoesNotExist:
+            return None
+
+    def get_user_by_username(self, username):
+        try:
+            return User.objects.get(username=username)
+        except User.DoesNotExist:
+            return None
+
+    def get_user_info(self, username):
+        return {'resultado': 'Exito',
+                'nombre_usuario': username,
+                'primer_nombre': 'You',
+                'primer_apellido': 'Shall Pass',
+                'nombre_completo': 'You Shall Pass',
+                'email': ''
+                }
+
+    def create_user(self, usuario_nuevo, user_info):
+        usuario_nuevo.first_name = user_info['primer_nombre']
+        usuario_nuevo.last_name = user_info['primer_apellido']
+        usuario_nuevo.email = user_info['email']
+        usuario_nuevo.save()
+        user_profile = SocialNetworkUser(usuario=usuario_nuevo)
+        user_profile.save()
+        return usuario_nuevo

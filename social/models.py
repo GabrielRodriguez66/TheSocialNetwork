@@ -37,6 +37,7 @@ class SocialNetworkUser(models.Model):
 
 class Chat(models.Model):
     creation_date = models.DateTimeField('date created')
+    name = models.CharField(max_length=80)
 
 
 class Message(models.Model):

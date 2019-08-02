@@ -1,0 +1,52 @@
+{% extends 'social/base.html' %}
+
+{% block active %}
+    <li class="nav-item">
+        <a class="nav-link" id="navTimeline" href="{%  url "social:timeline" %}">Timeline</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navSearch" href="{%  url "social:search" %}">Search</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
+    </li>
+    <li class="nav-item active">
+        <a class="nav-link" id="navMyFriends" href=""> Chats <span class="sr-only">(current)</span> </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" id="navLogout" href="{% url "social:logout_view" %}">Logout</a>
+    </li>
+{% endblock%}
+
+{% block content %}
+    <h1><strong> Chats </strong></h1>
+
+    {% if chats %}
+
+        <ul>
+            {%  for chat_id, chat_name, chat_date, message_id in chats %}
+
+                <li>
+                    <div class="card" style="width: 30rem;">
+                        <div class="card-body">
+
+                            <h5 class="card-title"> {{ chat_name }}</h5>
+                            <div style="float:right" ><p> <strong> posted </strong> {{ chat_date }}</p></div>
+
+                        </div>
+                    </div>
+                </li>
+                <a href="{% url "social:open_chat" message_id %}" class="btn btn-info btn-sm">
+                    Open Chat
+                </a>
+                <br>
+                <br>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p> You don't have chats. :( </p>
+    {% endif %}
+{% endblock %}

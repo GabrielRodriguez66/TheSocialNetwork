@@ -11,6 +11,9 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item">
+        <a class="nav-link" id="navChats" href="{% url "social:chats" %}">Chats</a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
     </li>
     <li class="nav-item">
@@ -45,7 +48,7 @@
     </div> <br> <br> <br> <br>
 
     <h4>&nbsp Filter messages: </h4>
-    <form action={% url "social:timeline" %} method="POST">
+    <form action="" method="POST">
         {% csrf_token %}
         <input type="radio" name="filter" value=1>Sender   &nbsp &nbsp &nbsp{{ senderform }}​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​ <br>
         <input type="radio" name="filter" value=2>Receiver &nbsp &nbsp{{ receiverform }}​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​​ <br>
