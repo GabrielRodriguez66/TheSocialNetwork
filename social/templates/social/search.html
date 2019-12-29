@@ -11,7 +11,7 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navChats" href="{% url "social:chats" %}">Chats</a>
+        <a class="nav-link" id="navChats" href="{% url "social:create_or_get_chat" %}">Chats</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
@@ -57,7 +57,7 @@
 
                                 </div>
 
-                                <form action="{% url "social:new_chat" user.id "none" 0%}" method="POST">
+                                <form action="{% url "social:create_or_get_chat"%}?friend_pk={{ user.id }}" method="POST">
                                     {% csrf_token %}
                                     <div class="modal-body">
                                         <div class="container">

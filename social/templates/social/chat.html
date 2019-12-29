@@ -11,7 +11,7 @@
         <a class="nav-link" id="navMyFriends" href=" {%  url "social:friends" %}">My friends</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link" id="navChats" href="{% url "social:chats" %}">Chats</a>
+        <a class="nav-link" id="navChats" href="{% url "social:create_or_get_chat" %}">Chats</a>
     </li>
     <li class="nav-item">
         <a class="nav-link" id="navProfile" href="{% url "social:profile" %}">Profile</a>
@@ -26,7 +26,7 @@
     <h2> Created: {{ date }}</h2>
     <br> <br>
 
-    <form action="{% url "social:new_chat" friend_pk "none" chat_id%}" method="post">
+    <form action="{% url "social:post_chat_message" friend_pk chat_id%}" method="post">
         {% csrf_token %}
         {{ chat_form }}
         <input class="btn btn-info btn-sm" id="submitButton" type="submit" value="Send">

@@ -1,10 +1,7 @@
 import ldap
 from django.conf import settings
-# Register your models here.
 from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
-
-#  Authentication Back-ends
 from social.models import SocialNetworkUser
 
 
@@ -132,7 +129,7 @@ class DummyBackend(ModelBackend):
         if must_exist:
             user = self.get_user_by_username(username)
         else:
-            user = User(username=username, password=password, is_active=True, is_staff=True, is_superuser=False)
+            user = User.objects.create(username=username, password=password, is_active=True, is_staff=True, is_superuser=False)
         return user
 
     def get_user(self, user_id):
@@ -150,9 +147,9 @@ class DummyBackend(ModelBackend):
     def get_user_info(self, username):
         return {'resultado': 'Exito',
                 'nombre_usuario': username,
-                'primer_nombre': 'You',
-                'primer_apellido': 'Shall Pass',
-                'nombre_completo': 'You Shall Pass',
+                'primer_nombre': username,
+                'primer_apellido': 'Apellido',
+                'nombre_completo': username + 'Apellido',
                 'email': ''
                 }
 

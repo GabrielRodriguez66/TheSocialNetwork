@@ -24,13 +24,13 @@ SECRET_KEY = 'xbe*b-n(7_xi%u0!tmxailg(e!a3ef++3ge+jh__5plt%h#d(='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+USE_DUMMY_BAKEND = True
 
 #Added TechLab local IP
 ALLOWED_HOSTS = ['172.17.125.45', 'localhost', '127.0.0.1']
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'social',
     'django.contrib.admin',
@@ -71,10 +71,8 @@ TEMPLATES = [
     },
 ]
 
-# En settings
-AUTH_BACKEND = 'social.admin.DummyBackend'
+AUTH_BACKEND = 'social.admin.DummyBackend' if USE_DUMMY_BAKEND else 'social.admin.SocialNetworkBackend'
 AUTHENTICATION_BACKENDS = (
-    # 'social.admin.SocialNetworkBackend',
     AUTH_BACKEND,
 )
 
@@ -97,8 +95,8 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
         'NAME': 'social',
-        'USER': 'jose',
-        'PASSWORD': 'password',
+        'USER': 'social_user',
+        'PASSWORD': 'social_user_password',
         'HOST': 'localhost',
         'PORT': '5432',
     }

@@ -43,6 +43,11 @@ def asocia_usuario(request):
 
 
 @login_required
+def home(request):
+    return HttpResponseRedirect(reverse("social:timeline"))
+
+
+@login_required
 def friends_view(request):
     form = CreateChatForm()
     friends = request.user.socialnetworkuser.friends.all().values_list('id', 'usuario__username', 'usuario__first_name')
@@ -148,12 +153,12 @@ def respond_request(request, request_pk, accepted):
         dest.friends.add(rem)
         req.status = ACCEPTED_STATUS
         message = Message.objects.create(text=status_choices.get(ACCEPTED_STATUS), author=dest,
-                                         pub_date=timezone.now(), chat=Chat.objects.create(creation_date=timezone.now()))
+                                         pub_date=timezone.now(), chat=Chat.objects.create(name='New Friends Chat', creation_date=timezone.now()))
         Recibido.objects.create(message_id=message, user_id=rem)
     elif accepted == REJECTED_STATUS:
         req.status = REJECTED_STATUS
         message = Message.objects.create(text=status_choices.get(REJECTED_STATUS), author=dest,
-                                         pub_date=timezone.now(), chat=Chat.objects.create(creation_date=timezone.now()))
+                                         pub_date=timezone.now(), chat=Chat.objects.create(name='Friend Request Rejected', creation_date=timezone.now()))
         Recibido.objects.create(message_id=message, user_id=rem)
     elif accepted == IGNORED_STATUS:
         req.status = IGNORED_STATUS
@@ -228,62 +233,64 @@ def timeline(request):
                                                     })
 
 
-@login_required
-def home(request):
-    return HttpResponseRedirect(reverse("social:timeline"))
-
-
-@login_required
-def message_manager(request, friend_pk, view=None, chat_pk=None):
-    if chat_pk is not None:  # if chat_pk == 0 we want it to enter in this if
-        form = CreateChatForm(request.POST or None) if chat_pk == 0 else ChatForm(request.POST or None)
-    else:  # if chat_pk is None, then is a shout
-        form = ShoutForm(request.POST or None)
-
-    if form.is_valid():
-        message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
-                                         pub_date=timezone.now())
-        recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
-        Recibido.objects.create(message_id=message, user_id=recipient)
-
-        if chat_pk is not None:  # if chat_pk != None create a new chat or search for one
-            chat = Chat.objects.create(creation_date=timezone.now(), name=request.POST['chat_name']) if chat_pk == 0\
-                                                                            else get_object_or_404(Chat, pk=chat_pk)
-            message.chat = chat
-            message.save()
-            creation_date, messages, chat_name = chat.creation_date, chat.message_set, chat.name
-            recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
-                values_list('message_id__text', 'message_id__author__usuario__first_name',
-                            'user_id__usuario__first_name',
-                            'message_id__pub_date').order_by('-message_id__pub_date')
-
-            return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "date": creation_date,
-                                                        "recibido_messages": recibido_messages, 'chat_form': ChatForm(),
-                                                        'chat_name': chat_name})
-    return HttpResponseRedirect(reverse("social:"+view))
-
-
-@login_required
-def open_chat_view(request, message_id):
-    message = get_object_or_404(Message, pk=message_id)
-    chat = message.chat
-    messages = chat.message_set.order_by('-pub_date')
-    creation_date = chat.creation_date
-    recibido_messages = Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
+def get_recibido_messages(messages):
+    return Recibido.objects.filter(message_id__in=Subquery(messages.values('id'))). \
         values_list('message_id__text', 'message_id__author__usuario__first_name',
                     'user_id__usuario__first_name',
                     'message_id__pub_date').order_by('-message_id__pub_date')
 
-    friend_pk = message.recipients.first().id if message.author.usuario == request.user else message.author.id
-    return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "recibido_messages":
-                                                recibido_messages, "date": creation_date, 'chat_form': ChatForm(),
-                                                'chat_name': chat.name})
+
+@login_required
+def post_chat_message(request, friend_pk, chat_pk):
+    form = ChatForm(request.POST or None)
+    if form.is_valid():
+        chat = get_object_or_404(Chat, pk=chat_pk)
+        message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
+                                         pub_date=timezone.now(), chat=chat)
+        recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
+        Recibido.objects.create(message_id=message, user_id=recipient)
+        creation_date, messages, chat_name = chat.creation_date, chat.message_set, chat.name
+        recibido_messages = get_recibido_messages(messages)
+        return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "date": creation_date,
+                                                    "recibido_messages": recibido_messages, 'chat_form': ChatForm(),
+                                                    'chat_name': chat_name})
 
 
 @login_required
-def all_chats_view(request):
-    chats = Chat.objects.all().values_list("id", "name", "creation_date", "message")
-    return render(request, 'social/chat_list.html', {"chats": chats})
+def chats_manager(request):
+    if request.method == 'POST' and 'friend_pk' in request.GET:
+        # Create a new Chat
+        form = CreateChatForm(request.POST or None)
+        if form.is_valid():
+            friend_pk = int(request.GET['friend_pk'])
+            message = Message.objects.create(text=request.POST["text"], author=request.user.socialnetworkuser,
+                                             pub_date=timezone.now())
+            recipient = get_object_or_404(SocialNetworkUser, pk=friend_pk)
+            Recibido.objects.create(message_id=message, user_id=recipient)
+            chat = Chat.objects.create(creation_date=timezone.now(), name=request.POST['chat_name'])
+            message.chat = chat
+            message.save()
+            creation_date, messages, chat_name = chat.creation_date, chat.message_set.order_by('-pub_date'), chat.name
+            recibido_messages = get_recibido_messages(messages)
+            return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "date": creation_date,
+                                                        "recibido_messages": recibido_messages, 'chat_form': ChatForm(),
+                                                        'chat_name': chat_name})
+        return HttpResponseRedirect(reverse("social:search"))
+    elif request.method == 'GET' and 'message_id' in request.GET:
+        # Get an specific chat
+        message = get_object_or_404(Message, pk=int(request.GET['message_id']))
+        chat = message.chat
+        messages = chat.message_set.order_by('-pub_date')
+        creation_date = chat.creation_date
+        recibido_messages = get_recibido_messages(messages)
+        friend_pk = message.recipients.first().id if message.author.usuario == request.user else message.author.id
+        return render(request, 'social/chat.html', {"friend_pk": friend_pk, "chat_id": chat.id, "recibido_messages":
+            recibido_messages, "date": creation_date, 'chat_form': ChatForm(),
+                                                    'chat_name': chat.name})
+    elif request.method == 'GET':
+        # Get all chats
+        chats = Chat.objects.all().values_list("id", "name", "creation_date", "message").distinct('id')
+        return render(request, 'social/chat_list.html', {"chats": chats})
 
 
 @login_required
