@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 """
 
 import os
+from .notariat_ad import NOTARIAT_AD
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -24,11 +25,11 @@ SECRET_KEY = 'xbe*b-n(7_xi%u0!tmxailg(e!a3ef++3ge+jh__5plt%h#d(='
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+# Set to true when not using Active Directory for auth
 USE_DUMMY_BAKEND = True
 
-#Added TechLab local IP
-ALLOWED_HOSTS = ['172.17.125.45', 'localhost', '127.0.0.1']
-
+ALLOWED_HOSTS = ['localhost', '127.0.0.1']
 
 # Application definition
 INSTALLED_APPS = [
@@ -76,14 +77,7 @@ AUTHENTICATION_BACKENDS = (
     AUTH_BACKEND,
 )
 
-NOTARIAT_ACTIVE_DIRECTORY = 'dcsj01.tribunales.local'
-
-NOTARIAT_AD = {
-    'ad_url': 'ldap://' + NOTARIAT_ACTIVE_DIRECTORY,
-    'service_account_dn': 'CN=renservice,OU=Cuentas de Servicios,OU=Tribunales,DC=tribunales,DC=local',
-    'service_account_password': 'Apl1rens3c',
-    'search_root': 'OU=tribunales,dc=tribunales,dc=local',
-}
+NOTARIAT_AD = NOTARIAT_AD
 
 WSGI_APPLICATION = 'TheSocialNetwork.wsgi.application'
 
@@ -91,6 +85,7 @@ WSGI_APPLICATION = 'TheSocialNetwork.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
+# This is just a test database with dummy credentials
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
